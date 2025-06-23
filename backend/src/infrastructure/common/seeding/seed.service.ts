@@ -29,14 +29,14 @@ export class SeedService implements OnModuleInit {
         description: 'La camiseta perfecta para largas noches de codificación.',
         price: 25000, 
         stock: 50,
-        imageUrl: 'https://via.placeholder.com/300x300.png?text=Code+Life+T-Shirt',
+        imageUrl: 'https://cdn.awsli.com.br/300x300/608/608801/produto/153700346/b06af391c1.jpg',
       },
       {
         name: 'Taza "Hello World"',
         description: 'Empieza tu día con el clásico saludo de todo programador.',
         price: 15000,
         stock: 100,
-        imageUrl: 'https://via.placeholder.com/300x300.png?text=Hello+World+Mug',
+        imageUrl: 'https://http2.mlstatic.com/D_NQ_NP_803078-MLU76019047524_052024-O.webp',
       },
     ];
 

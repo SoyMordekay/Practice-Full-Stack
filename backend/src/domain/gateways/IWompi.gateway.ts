@@ -11,6 +11,7 @@ export interface WompiPaymentData {
 }
 
 export interface WompiPaymentResponse {
+  reference: any;
   id: string;
   status: 'APPROVED' | 'DECLINED' | 'VOIDED' | 'ERROR';
 }
