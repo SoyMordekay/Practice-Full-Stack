@@ -16,6 +16,7 @@ const config_1 = require("@nestjs/config");
 const axios_1 = require("@nestjs/axios");
 const rxjs_1 = require("rxjs");
 const crypto = require("crypto");
+const axios_2 = require("axios");
 let WompiGateway = WompiGateway_1 = class WompiGateway {
     configService;
     httpService;
@@ -26,21 +27,34 @@ let WompiGateway = WompiGateway_1 = class WompiGateway {
     WOMPI_INTEGRITY_KEY;
     WOMPI_EVENTS_SECRET;
     acceptanceToken = '';
+    axiosInstance;
     TEST_CARDS = {
         approved: '4242424242424242',
         declined: '4000000000000002',
         pending: '4000000000000069',
         insufficient: '4000000000000119',
-        fraud: '4100000000000019'
+        fraud: '4100000000000019',
     };
     constructor(configService, httpService) {
         this.configService = configService;
         this.httpService = httpService;
-        this.WOMPI_API_BASE_URL = this.configService.get('WOMPI_API_BASE_URL') ?? '';
-        this.WOMPI_PRIVATE_KEY = this.configService.get('WOMPI_PRIVATE_KEY') ?? '';
-        this.WOMPI_PUBLIC_KEY = this.configService.get('WOMPI_PUBLIC_KEY') ?? '';
-        this.WOMPI_INTEGRITY_KEY = this.configService.get('WOMPI_INTEGRITY_KEY') ?? '';
-        this.WOMPI_EVENTS_SECRET = this.configService.get('WOMPI_EVENTS_SECRET') ?? '';
+        this.WOMPI_API_BASE_URL =
+            this.configService.get('WOMPI_API_BASE_URL') ?? '';
+        this.WOMPI_PRIVATE_KEY =
+            this.configService.get('WOMPI_PRIVATE_KEY') ?? '';
+        this.WOMPI_PUBLIC_KEY =
+            this.configService.get('WOMPI_PUBLIC_KEY') ?? '';
+        this.WOMPI_INTEGRITY_KEY =
+            this.configService.get('WOMPI_INTEGRITY_KEY') ?? '';
+        this.WOMPI_EVENTS_SECRET =
+            this.configService.get('WOMPI_EVENTS_SECRET') ?? '';
+        this.axiosInstance = axios_2.default.create({
+            baseURL: this.WOMPI_API_BASE_URL,
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.WOMPI_PRIVATE_KEY}`,
+            },
+        });
         this.logger.log('Wompi Config Loaded for Gateway:', {
             apiBaseUrl: this.WOMPI_API_BASE_URL,
             hasPrivateKey: !!this.WOMPI_PRIVATE_KEY,
@@ -71,7 +85,10 @@ let WompiGateway = WompiGateway_1 = class WompiGateway {
     }
     generateIntegritySignature(reference, amountInCents, currency) {
         const message = `${reference}${amountInCents}${currency}${this.WOMPI_INTEGRITY_KEY}`;
-        const hash = crypto.createHash('sha256').update(message, 'utf8').digest('hex');
+        const hash = crypto
+            .createHash('sha256')
+            .update(message, 'utf8')
+            .digest('hex');
         this.logger.log(`Signature: Generated for ref ${reference} -> hash: ${hash}`);
         this.logger.debug(`Signature message: "${message}"`);
         return hash;
@@ -81,7 +98,7 @@ let WompiGateway = WompiGateway_1 = class WompiGateway {
         const acceptanceToken = await this.getAcceptanceToken();
         const headers = {
             Authorization: `Bearer ${this.WOMPI_PRIVATE_KEY}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         };
         const signature = this.generateIntegritySignature(data.reference, data.amountInCents, data.currency);
         const wompiPayload = {
@@ -202,18 +219,22 @@ let WompiGateway = WompiGateway_1 = class WompiGateway {
         const url = `${this.WOMPI_API_BASE_URL}/tokens/cards`;
         const headers = {
             Authorization: `Bearer ${this.WOMPI_PUBLIC_KEY}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         };
-        const finalCardNumber = testScenario ? this.TEST_CARDS[testScenario] : cardNumber;
+        const finalCardNumber = testScenario
+            ? this.TEST_CARDS[testScenario]
+            : cardNumber;
         const payload = {
             number: finalCardNumber,
             cvc: '123',
             exp_month: '12',
             exp_year: '2025',
-            card_holder: 'Test User'
+            card_holder: 'Test User',
         };
         try {
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(url, payload, { headers }));
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(url, payload, {
+                headers,
+            }));
             this.logger.log(`Test card token generated for scenario: ${testScenario || 'custom'}`, {
                 tokenId: response.data.data.id,
                 cardNumber: finalCardNumber.replace(/\d(?=\d{4})/g, '*'),
@@ -237,8 +258,8 @@ let WompiGateway = WompiGateway_1 = class WompiGateway {
                 declined: 'DECLINED - Pago rechazado',
                 pending: 'PENDING - Pago pendiente de confirmación',
                 insufficient: 'DECLINED - Fondos insuficientes',
-                fraud: 'DECLINED - Transacción fraudulenta'
-            }
+                fraud: 'DECLINED - Transacción fraudulenta',
+            },
         };
     }
 };

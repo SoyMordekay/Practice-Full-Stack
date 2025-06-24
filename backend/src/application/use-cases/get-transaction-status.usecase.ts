@@ -16,14 +16,26 @@ export interface GetTransactionStatusResponse {
   finalized_at?: string;
 }
 
+export interface WompiTransactionStatusExtended {
+  id: string;
+  status: string;
+  amount_in_cents: number;
+  reference: string;
+  customer_email?: string;
+  created_at?: string;
+  finalized_at?: string;
+}
+
 export class GetTransactionStatusResult {
   constructor(
     public readonly isSuccess: boolean,
     public readonly value?: GetTransactionStatusResponse,
-    public readonly error?: Error
+    public readonly error?: Error,
   ) {}
 
-  static success(value: GetTransactionStatusResponse): GetTransactionStatusResult {
+  static success(
+    value: GetTransactionStatusResponse,
+  ): GetTransactionStatusResult {
     return new GetTransactionStatusResult(true, value);
   }
 
@@ -36,26 +48,39 @@ export class GetTransactionStatusResult {
 export class GetTransactionStatusUseCase {
   constructor(
     @Inject(IWompiGateway) private readonly wompiGateway: IWompiGateway,
-    @Inject(ITransactionRepository) private readonly transactionRepository: ITransactionRepository,
+    @Inject(ITransactionRepository)
+    private readonly transactionRepository: ITransactionRepository,
   ) {}
 
-  async execute(request: GetTransactionStatusRequest): Promise<GetTransactionStatusResult> {
+  async execute(
+    request: GetTransactionStatusRequest,
+  ): Promise<GetTransactionStatusResult> {
     try {
       // Obtener el estado de la transacción desde Wompi
-      const wompiStatus = await this.wompiGateway.getTransactionStatus(request.transactionId);
-      
+      const wompiStatus = await this.wompiGateway.getTransactionStatus(
+        request.transactionId,
+      );
+
       // Intentar encontrar la transacción en nuestra base de datos por referencia
-      const localTransaction = await this.transactionRepository.findByReference(wompiStatus.reference);
-      
+      await this.transactionRepository.findByReference(wompiStatus.reference);
+
+      const extendedStatus = wompiStatus as WompiTransactionStatusExtended;
+
       const response: GetTransactionStatusResponse = {
         id: wompiStatus.id,
         status: wompiStatus.status,
         amount_in_cents: wompiStatus.amount_in_cents,
         reference: wompiStatus.reference,
         // Agregar campos adicionales si están disponibles
-        ...(wompiStatus as any).customer_email && { customer_email: (wompiStatus as any).customer_email },
-        ...(wompiStatus as any).created_at && { created_at: (wompiStatus as any).created_at },
-        ...(wompiStatus as any).finalized_at && { finalized_at: (wompiStatus as any).finalized_at },
+        ...(extendedStatus.customer_email && {
+          customer_email: extendedStatus.customer_email,
+        }),
+        ...(extendedStatus.created_at && {
+          created_at: extendedStatus.created_at,
+        }),
+        ...(extendedStatus.finalized_at && {
+          finalized_at: extendedStatus.finalized_at,
+        }),
       };
 
       return GetTransactionStatusResult.success(response);
@@ -63,4 +88,4 @@ export class GetTransactionStatusUseCase {
       return GetTransactionStatusResult.failure(error as Error);
     }
   }
-} 
+}

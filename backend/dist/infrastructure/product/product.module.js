@@ -25,7 +25,7 @@ exports.ProductModule = ProductModule = __decorate([
             seed_service_1.SeedService,
             {
                 provide: IProduct_repository_1.IProductRepository,
-                useClass: product_repository_1.ProductRepositoryPg,
+                useClass: product_repository_1.ProductRepository,
             },
         ],
         exports: [IProduct_repository_1.IProductRepository],

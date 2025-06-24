@@ -3,7 +3,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../../app/store';
 import { createTransaction } from './paymentSlice';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import './PaymentForm.css';
 
 interface IFormInput {
@@ -12,6 +12,13 @@ interface IFormInput {
   expYear: string;
   cvc: string;
   cardHolder: string;
+}
+
+interface WompiErrorResponse {
+  error?: {
+    messages?: string[];
+  };
+  message?: string;
 }
 
 const CardLogo = ({ type }: { type: 'VISA' | 'MASTERCARD' | null }) => {
@@ -88,12 +95,13 @@ export const PaymentForm: React.FC = () => {
         setApiError("Error en la respuesta de la API de tokenización.");
       }
 
-    } catch (tokenizationError: any) {
-      console.error("Error al tokenizar directamente:", tokenizationError.response?.data || tokenizationError.message);
-      const errorMessage = tokenizationError.response?.data?.error?.messages 
-        ? JSON.stringify(tokenizationError.response.data.error.messages)
-        : tokenizationError.response?.data?.message
-        || tokenizationError.message
+    } catch (tokenizationError: unknown) {
+      const error = tokenizationError as AxiosError<WompiErrorResponse>;
+      console.error("Error al tokenizar directamente:", error.response?.data || error.message);
+      const errorMessage = error.response?.data?.error?.messages 
+        ? JSON.stringify(error.response.data.error.messages)
+        : error.response?.data?.message
+        || error.message
         || 'Error desconocido al obtener token';
       setApiError(`Error al obtener el token: ${errorMessage}`);
     }

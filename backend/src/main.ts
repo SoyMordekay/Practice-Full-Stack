@@ -8,7 +8,7 @@ async function bootstrap() {
 
   // Habilitar CORS
   app.enableCors();
-  
+
   // Esto es necesario si quieres usar @RawBody() en el controlador.
   // Si solo usas @Body() y la firma viene en el payload como payload.signature.checksum, no es estrictamente necesario,
   // pero si la firma se calcula sobre el cuerpo crudo, sí.
@@ -18,4 +18,4 @@ async function bootstrap() {
 
   await app.listen(3000);
 }
-bootstrap();
+void bootstrap();

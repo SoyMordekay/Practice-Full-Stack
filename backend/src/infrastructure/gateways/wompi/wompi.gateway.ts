@@ -3,7 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import * as crypto from 'crypto';
-import { IWompiGateway, WompiPaymentData, WompiPaymentResponse, WompiTransactionStatusResponse } from '../../../domain/gateways/IWompi.gateway';
+import {
+  IWompiGateway,
+  WompiPaymentData,
+  WompiPaymentResponse,
+  WompiTransactionStatusResponse,
+} from '../../../domain/gateways/IWompi.gateway';
+import axios, { AxiosInstance } from 'axios';
 
 // Interfaces para las nuevas funcionalidades
 export interface WompiTransactionStatus {
@@ -55,6 +61,7 @@ export class WompiGateway implements IWompiGateway {
   private readonly WOMPI_INTEGRITY_KEY: string;
   private readonly WOMPI_EVENTS_SECRET: string;
   private acceptanceToken: string = '';
+  private readonly axiosInstance: AxiosInstance;
 
   // Tarjetas de prueba para diferentes escenarios
   public readonly TEST_CARDS: WompiTestCards = {
@@ -62,18 +69,31 @@ export class WompiGateway implements IWompiGateway {
     declined: '4000000000000002',
     pending: '4000000000000069',
     insufficient: '4000000000000119',
-    fraud: '4100000000000019'
+    fraud: '4100000000000019',
   };
 
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.WOMPI_API_BASE_URL = this.configService.get<string>('WOMPI_API_BASE_URL') ?? '';
-    this.WOMPI_PRIVATE_KEY = this.configService.get<string>('WOMPI_PRIVATE_KEY') ?? '';
-    this.WOMPI_PUBLIC_KEY = this.configService.get<string>('WOMPI_PUBLIC_KEY') ?? '';
-    this.WOMPI_INTEGRITY_KEY = this.configService.get<string>('WOMPI_INTEGRITY_KEY') ?? '';
-    this.WOMPI_EVENTS_SECRET = this.configService.get<string>('WOMPI_EVENTS_SECRET') ?? '';
+    this.WOMPI_API_BASE_URL =
+      this.configService.get<string>('WOMPI_API_BASE_URL') ?? '';
+    this.WOMPI_PRIVATE_KEY =
+      this.configService.get<string>('WOMPI_PRIVATE_KEY') ?? '';
+    this.WOMPI_PUBLIC_KEY =
+      this.configService.get<string>('WOMPI_PUBLIC_KEY') ?? '';
+    this.WOMPI_INTEGRITY_KEY =
+      this.configService.get<string>('WOMPI_INTEGRITY_KEY') ?? '';
+    this.WOMPI_EVENTS_SECRET =
+      this.configService.get<string>('WOMPI_EVENTS_SECRET') ?? '';
+
+    this.axiosInstance = axios.create({
+      baseURL: this.WOMPI_API_BASE_URL,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.WOMPI_PRIVATE_KEY}`,
+      },
+    });
 
     this.logger.log('Wompi Config Loaded for Gateway:', {
       apiBaseUrl: this.WOMPI_API_BASE_URL,
@@ -94,9 +114,7 @@ export class WompiGateway implements IWompiGateway {
 
     try {
       const url = `${this.WOMPI_API_BASE_URL}/merchants/${this.WOMPI_PUBLIC_KEY}`;
-      const response = await firstValueFrom(
-        this.httpService.get(url)
-      );
+      const response = await firstValueFrom(this.httpService.get(url));
 
       const presignedAcceptance = response.data.data.presigned_acceptance;
       if (!presignedAcceptance || !presignedAcceptance.acceptance_token) {
@@ -107,7 +125,10 @@ export class WompiGateway implements IWompiGateway {
       this.logger.log('Acceptance token obtenido exitosamente');
       return this.acceptanceToken;
     } catch (error) {
-      this.logger.error('Error obteniendo acceptance token:', error.response?.data || error.message);
+      this.logger.error(
+        'Error obteniendo acceptance token:',
+        error.response?.data || error.message,
+      );
       throw new Error('No se pudo obtener el acceptance token de Wompi');
     }
   }
@@ -118,22 +139,27 @@ export class WompiGateway implements IWompiGateway {
     currency: string,
   ): string {
     const message = `${reference}${amountInCents}${currency}${this.WOMPI_INTEGRITY_KEY}`;
-    const hash = crypto.createHash('sha256').update(message, 'utf8').digest('hex');
-    
-    this.logger.log(`Signature: Generated for ref ${reference} -> hash: ${hash}`);
+    const hash = crypto
+      .createHash('sha256')
+      .update(message, 'utf8')
+      .digest('hex');
+
+    this.logger.log(
+      `Signature: Generated for ref ${reference} -> hash: ${hash}`,
+    );
     this.logger.debug(`Signature message: "${message}"`);
-    
+
     return hash;
   }
 
   async createPayment(data: WompiPaymentData): Promise<WompiPaymentResponse> {
     const url = `${this.WOMPI_API_BASE_URL}/transactions`;
-    
+
     const acceptanceToken = await this.getAcceptanceToken();
-    
-    const headers = { 
+
+    const headers = {
       Authorization: `Bearer ${this.WOMPI_PRIVATE_KEY}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
 
     const signature = this.generateIntegritySignature(
@@ -163,15 +189,19 @@ export class WompiGateway implements IWompiGateway {
 
     try {
       const wompiResponse = await firstValueFrom(
-        this.httpService.post<{ data: WompiPaymentResponse }>(url, wompiPayload, { headers }),
+        this.httpService.post<{ data: WompiPaymentResponse }>(
+          url,
+          wompiPayload,
+          { headers },
+        ),
       );
-      
+
       this.logger.log('Wompi API call successful:', {
         id: wompiResponse.data.data.id,
         status: wompiResponse.data.data.status,
         reference: wompiResponse.data.data.reference,
       });
-      
+
       return wompiResponse.data.data;
     } catch (error) {
       this.logger.error('Error from Wompi API (/transactions):', {
@@ -179,11 +209,11 @@ export class WompiGateway implements IWompiGateway {
         statusText: error.response?.statusText,
         data: error.response?.data,
       });
-      
-      const errorMessage = error.response?.data?.error?.messages 
+
+      const errorMessage = error.response?.data?.error?.messages
         ? JSON.stringify(error.response.data.error.messages)
         : error.message;
-      
+
       throw new Error(`Error en Wompi API: ${errorMessage}`);
     }
   }
@@ -191,14 +221,21 @@ export class WompiGateway implements IWompiGateway {
   /**
    * Consulta el estado actual de una transacción
    */
-  async getTransactionStatus(transactionId: string): Promise<WompiTransactionStatusResponse> {
+  async getTransactionStatus(
+    transactionId: string,
+  ): Promise<WompiTransactionStatusResponse> {
     try {
       const url = `${this.WOMPI_API_BASE_URL}/transactions/${transactionId}`;
       const response = await firstValueFrom(this.httpService.get(url));
       return response.data.data;
     } catch (error) {
-      this.logger.error('Error consultando el estado de la transacción:', error.response?.data || error.message);
-      throw new Error('No se pudo consultar el estado de la transacción en Wompi');
+      this.logger.error(
+        'Error consultando el estado de la transacción:',
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        'No se pudo consultar el estado de la transacción en Wompi',
+      );
     }
   }
 
@@ -208,7 +245,7 @@ export class WompiGateway implements IWompiGateway {
   validateWebhookSignature(
     payload: string,
     signature: string,
-    timestamp: string
+    timestamp: string,
   ): boolean {
     try {
       // Wompi usa el siguiente formato para generar la firma:
@@ -222,10 +259,12 @@ export class WompiGateway implements IWompiGateway {
       // Comparar de forma segura
       const isValid = crypto.timingSafeEqual(
         Buffer.from(signature, 'hex'),
-        Buffer.from(expectedSignature, 'hex')
+        Buffer.from(expectedSignature, 'hex'),
       );
 
-      this.logger.debug(`Webhook signature validation: ${isValid ? 'VALID' : 'INVALID'}`);
+      this.logger.debug(
+        `Webhook signature validation: ${isValid ? 'VALID' : 'INVALID'}`,
+      );
       return isValid;
     } catch (error) {
       this.logger.error('Error validating webhook signature:', error);
@@ -239,7 +278,7 @@ export class WompiGateway implements IWompiGateway {
   async processWebhookEvent(
     payload: string,
     signature: string,
-    timestamp: string
+    timestamp: string,
   ): Promise<WompiWebhookEvent> {
     // Validar la firma primero
     if (!this.validateWebhookSignature(payload, signature, timestamp)) {
@@ -248,7 +287,7 @@ export class WompiGateway implements IWompiGateway {
 
     try {
       const event: WompiWebhookEvent = JSON.parse(payload);
-      
+
       this.logger.log('Processing webhook event:', {
         event: event.event,
         transactionId: event.data.transaction.id,
@@ -278,27 +317,39 @@ export class WompiGateway implements IWompiGateway {
   /**
    * Maneja el evento de transacción actualizada
    */
-  private async handleTransactionUpdated(transaction: WompiTransactionStatus): Promise<void> {
-    this.logger.log(`Transaction updated: ${transaction.id} -> ${transaction.status}`);
-    
+  private async handleTransactionUpdated(
+    transaction: WompiTransactionStatus,
+  ): Promise<void> {
+    this.logger.log(
+      `Transaction updated: ${transaction.id} -> ${transaction.status}`,
+    );
+
     // Aquí puedes agregar tu lógica de negocio
     // Por ejemplo: actualizar la base de datos, enviar notificaciones, etc.
-    
+
     switch (transaction.status) {
       case 'APPROVED':
-        this.logger.log(`Payment approved for reference: ${transaction.reference}`);
+        this.logger.log(
+          `Payment approved for reference: ${transaction.reference}`,
+        );
         // Lógica para pago aprobado
         break;
       case 'DECLINED':
-        this.logger.log(`Payment declined for reference: ${transaction.reference}`);
+        this.logger.log(
+          `Payment declined for reference: ${transaction.reference}`,
+        );
         // Lógica para pago rechazado
         break;
       case 'PENDING':
-        this.logger.log(`Payment pending for reference: ${transaction.reference}`);
+        this.logger.log(
+          `Payment pending for reference: ${transaction.reference}`,
+        );
         // Lógica para pago pendiente
         break;
       case 'ERROR':
-        this.logger.error(`Payment error for reference: ${transaction.reference}`);
+        this.logger.error(
+          `Payment error for reference: ${transaction.reference}`,
+        );
         // Lógica para error en pago
         break;
     }
@@ -307,44 +358,61 @@ export class WompiGateway implements IWompiGateway {
   /**
    * Maneja el evento de transacción creada
    */
-  private async handleTransactionCreated(transaction: WompiTransactionStatus): Promise<void> {
-    this.logger.log(`Transaction created: ${transaction.id} with status ${transaction.status}`);
+  private async handleTransactionCreated(
+    transaction: WompiTransactionStatus,
+  ): Promise<void> {
+    this.logger.log(
+      `Transaction created: ${transaction.id} with status ${transaction.status}`,
+    );
     // Lógica para nueva transacción
   }
 
   /**
    * Genera un token de tarjeta de prueba para testing
    */
-  async generateTestCardToken(cardNumber: string, testScenario?: keyof WompiTestCards): Promise<string> {
+  async generateTestCardToken(
+    cardNumber: string,
+    testScenario?: keyof WompiTestCards,
+  ): Promise<string> {
     const url = `${this.WOMPI_API_BASE_URL}/tokens/cards`;
-    const headers = { 
+    const headers = {
       Authorization: `Bearer ${this.WOMPI_PUBLIC_KEY}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
 
-    const finalCardNumber = testScenario ? this.TEST_CARDS[testScenario] : cardNumber;
+    const finalCardNumber = testScenario
+      ? this.TEST_CARDS[testScenario]
+      : cardNumber;
 
     const payload = {
       number: finalCardNumber,
       cvc: '123',
       exp_month: '12',
       exp_year: '2025',
-      card_holder: 'Test User'
+      card_holder: 'Test User',
     };
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post<{ data: { id: string } }>(url, payload, { headers })
+        this.httpService.post<{ data: { id: string } }>(url, payload, {
+          headers,
+        }),
       );
 
-      this.logger.log(`Test card token generated for scenario: ${testScenario || 'custom'}`, {
-        tokenId: response.data.data.id,
-        cardNumber: finalCardNumber.replace(/\d(?=\d{4})/g, '*'),
-      });
+      this.logger.log(
+        `Test card token generated for scenario: ${testScenario || 'custom'}`,
+        {
+          tokenId: response.data.data.id,
+          cardNumber: finalCardNumber.replace(/\d(?=\d{4})/g, '*'),
+        },
+      );
 
       return response.data.data.id;
     } catch (error) {
-      this.logger.error('Error generating test card token:', error.response?.data);
+      this.logger.error(
+        'Error generating test card token:',
+        error.response?.data,
+      );
       throw new Error('Failed to generate test card token');
     }
   }
@@ -371,8 +439,8 @@ export class WompiGateway implements IWompiGateway {
         declined: 'DECLINED - Pago rechazado',
         pending: 'PENDING - Pago pendiente de confirmación',
         insufficient: 'DECLINED - Fondos insuficientes',
-        fraud: 'DECLINED - Transacción fraudulenta'
-      }
+        fraud: 'DECLINED - Transacción fraudulenta',
+      },
     };
   }
 }

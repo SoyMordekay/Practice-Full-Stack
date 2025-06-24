@@ -32,7 +32,9 @@ describe('ProductRepositoryPg (Integration)', () => {
     }).compile();
 
     repository = module.get<ProductRepositoryPg>(ProductRepositoryPg);
-    typeOrmRepo = module.get<Repository<ProductOrmEntity>>(getRepositoryToken(ProductOrmEntity));
+    typeOrmRepo = module.get<Repository<ProductOrmEntity>>(
+      getRepositoryToken(ProductOrmEntity),
+    );
   });
 
   beforeEach(async () => {
@@ -59,7 +61,9 @@ describe('ProductRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(productData);
 
       // Act
-      const product = await repository.findById('a3e1b2c4-1234-5678-9abc-def012345678');
+      const product = await repository.findById(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+      );
 
       // Assert
       expect(product).toBeDefined();
@@ -71,7 +75,9 @@ describe('ProductRepositoryPg (Integration)', () => {
 
     it('should return null if product not found', async () => {
       // Act
-      const product = await repository.findById('b4f2c3d5-2345-6789-abcd-ef1234567890');
+      const product = await repository.findById(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+      );
 
       // Assert
       expect(product).toBeNull();
@@ -133,20 +139,28 @@ describe('ProductRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(productData);
 
       // Act
-      const updatedProduct = await repository.decreaseStock('a3e1b2c4-1234-5678-9abc-def012345678', 3);
+      const updatedProduct = await repository.decreaseStock(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+        3,
+      );
 
       // Assert
       expect(updatedProduct.stock).toBe(7);
-      
+
       // Verify in database
-      const dbProduct = await typeOrmRepo.findOneBy({ id: 'a3e1b2c4-1234-5678-9abc-def012345678' });
+      const dbProduct = await typeOrmRepo.findOneBy({
+        id: 'a3e1b2c4-1234-5678-9abc-def012345678',
+      });
       expect(dbProduct?.stock).toBe(7);
     });
 
     it('should throw error if product not found', async () => {
       // Act & Assert
-      await expect(repository.decreaseStock('b4f2c3d5-2345-6789-abcd-ef1234567890', 1))
-        .rejects.toThrow('Product with ID "b4f2c3d5-2345-6789-abcd-ef1234567890" not found');
+      await expect(
+        repository.decreaseStock('b4f2c3d5-2345-6789-abcd-ef1234567890', 1),
+      ).rejects.toThrow(
+        'Product with ID "b4f2c3d5-2345-6789-abcd-ef1234567890" not found',
+      );
     });
 
     it('should throw error if insufficient stock', async () => {
@@ -162,8 +176,9 @@ describe('ProductRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(productData);
 
       // Act & Assert
-      await expect(repository.decreaseStock('a3e1b2c4-1234-5678-9abc-def012345678', 5))
-        .rejects.toThrow('Insufficient stock for product "Test Product"');
+      await expect(
+        repository.decreaseStock('a3e1b2c4-1234-5678-9abc-def012345678', 5),
+      ).rejects.toThrow('Insufficient stock for product "Test Product"');
     });
 
     it('should decrease stock to zero', async () => {
@@ -179,7 +194,10 @@ describe('ProductRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(productData);
 
       // Act
-      const updatedProduct = await repository.decreaseStock('a3e1b2c4-1234-5678-9abc-def012345678', 3);
+      const updatedProduct = await repository.decreaseStock(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+        3,
+      );
 
       // Assert
       expect(updatedProduct.stock).toBe(0);
@@ -240,7 +258,9 @@ describe('ProductRepositoryPg (Integration)', () => {
       expect(updatedProduct.stock).toBe(15);
 
       // Verify in database
-      const dbProduct = await typeOrmRepo.findOneBy({ id: 'a3e1b2c4-1234-5678-9abc-def012345678' });
+      const dbProduct = await typeOrmRepo.findOneBy({
+        id: 'a3e1b2c4-1234-5678-9abc-def012345678',
+      });
       expect(dbProduct?.name).toBe('Updated Name');
       expect(dbProduct?.price).toBe(2000);
     });
@@ -260,7 +280,9 @@ describe('ProductRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(productData);
 
       // Act
-      const product = await repository.findById('a3e1b2c4-1234-5678-9abc-def012345678');
+      const product = await repository.findById(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+      );
 
       // Assert
       expect(product?.price).toBe(0);
@@ -279,7 +301,9 @@ describe('ProductRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(productData);
 
       // Act
-      const product = await repository.findById('a3e1b2c4-1234-5678-9abc-def012345678');
+      const product = await repository.findById(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+      );
 
       // Assert
       expect(product?.stock).toBe(0);
@@ -299,10 +323,12 @@ describe('ProductRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(productData);
 
       // Act
-      const product = await repository.findById('a3e1b2c4-1234-5678-9abc-def012345678');
+      const product = await repository.findById(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+      );
 
       // Assert
       expect(product?.name).toBe('Product with special chars: !@#$%^&*()');
     });
   });
-}); 
+});

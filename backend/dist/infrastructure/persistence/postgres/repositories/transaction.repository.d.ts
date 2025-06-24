@@ -8,6 +8,6 @@ export declare class TransactionRepositoryPg implements ITransactionRepository {
     private toDomain;
     create(transactionData: CreateTransactionData): Promise<Transaction>;
     findById(id: string): Promise<Transaction | null>;
-    updateStatus(id: string, status: TransactionStatus, wompiTransactionId?: string, wompiResponse?: any): Promise<Transaction>;
+    updateStatus(id: string, status: TransactionStatus, wompiTransactionId?: string, wompiResponse?: Record<string, unknown>): Promise<Transaction>;
     findByReference(reference: string): Promise<Transaction | null>;
 }

@@ -20,17 +20,21 @@ const crypto = require("crypto");
 const ITransaction_repository_1 = require("../../domain/repositories/ITransaction.repository");
 const IProduct_repository_1 = require("../../domain/repositories/IProduct.repository");
 const common_2 = require("@nestjs/common");
+const wompi_gateway_1 = require("../gateways/wompi/wompi.gateway");
 let WompiWebhookController = WompiWebhookController_1 = class WompiWebhookController {
     configService;
     transactionRepo;
     productRepo;
+    wompiGateway;
     logger = new common_1.Logger(WompiWebhookController_1.name);
     WOMPI_EVENTS_SECRET;
-    constructor(configService, transactionRepo, productRepo) {
+    constructor(configService, transactionRepo, productRepo, wompiGateway) {
         this.configService = configService;
         this.transactionRepo = transactionRepo;
         this.productRepo = productRepo;
-        this.WOMPI_EVENTS_SECRET = this.configService.get('WOMPI_EVENTS_SECRET') ?? "";
+        this.wompiGateway = wompiGateway;
+        this.WOMPI_EVENTS_SECRET =
+            this.configService.get('WOMPI_EVENTS_SECRET') ?? '';
         if (!this.WOMPI_EVENTS_SECRET) {
             this.logger.error('WOMPI_EVENTS_SECRET no está configurado en .env. La validación de webhooks fallará.');
         }
@@ -68,13 +72,16 @@ let WompiWebhookController = WompiWebhookController_1 = class WompiWebhookContro
         const localTransaction = await this.transactionRepo.findByReference(transactionData.reference);
         if (!localTransaction) {
             this.logger.warn(`No se encontró transacción local con referencia: ${transactionData.reference}`);
-            return { message: 'Evento recibido, pero no se encontró transacción local correspondiente.' };
+            return {
+                message: 'Evento recibido, pero no se encontró transacción local correspondiente.',
+            };
         }
         if (localTransaction.status !== transactionData.status) {
             this.logger.log(`Actualizando estado de transacción local ${localTransaction.id} de ${localTransaction.status} a ${transactionData.status}`);
             await this.transactionRepo.updateStatus(localTransaction.id, transactionData.status);
         }
-        if (transactionData.status === 'APPROVED' && localTransaction.status !== 'APPROVED') {
+        if (transactionData.status === 'APPROVED' &&
+            localTransaction.status !== 'APPROVED') {
             this.logger.log(`Transacción ${transactionData.id} APROBADA. Actualizando stock para producto ID: ${localTransaction.productId}`);
             try {
                 await this.productRepo.decreaseStock(localTransaction.productId, 1);
@@ -87,6 +94,15 @@ let WompiWebhookController = WompiWebhookController_1 = class WompiWebhookContro
         this.logger.log(`Webhook para transacción de Wompi ID ${transactionData.id} procesado con éxito.`);
         return { message: 'Evento de webhook procesado con éxito.' };
     }
+    async handleWebhook(payload, signature, timestamp) {
+        try {
+            const event = await this.wompiGateway.processWebhookEvent(JSON.stringify(payload), signature, timestamp);
+            return { success: true, event: event.event };
+        }
+        catch {
+            throw new common_1.HttpException('Invalid webhook signature', common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
 };
 exports.WompiWebhookController = WompiWebhookController;
 __decorate([
@@ -97,10 +113,19 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], WompiWebhookController.prototype, "handleWompiEvent", null);
+__decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Headers)('wompi-signature')),
+    __param(2, (0, common_1.Headers)('wompi-timestamp')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
+], WompiWebhookController.prototype, "handleWebhook", null);
 exports.WompiWebhookController = WompiWebhookController = WompiWebhookController_1 = __decorate([
     (0, common_1.Controller)('webhooks/wompi'),
     __param(1, (0, common_2.Inject)(ITransaction_repository_1.ITransactionRepository)),
     __param(2, (0, common_2.Inject)(IProduct_repository_1.IProductRepository)),
-    __metadata("design:paramtypes", [config_1.ConfigService, Object, Object])
+    __metadata("design:paramtypes", [config_1.ConfigService, Object, Object, wompi_gateway_1.WompiGateway])
 ], WompiWebhookController);
 //# sourceMappingURL=web-hook.controller.js.map

@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../../app/store';
 import { fetchProducts, type Product } from './productSlice';
 import { openPaymentModal } from '../payment/paymentSlice';
+import './ProductList.css';
 
 export const ProductList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -28,7 +29,18 @@ export const ProductList: React.FC = () => {
       <div className="product-grid">
         {products.map((product) => (
           <div key={product.id} className="product-card">
-            <img src={product.imageUrl} alt={product.name} />
+            <img 
+              src={product.imageUrl} 
+              alt={product.name} 
+              loading="lazy"
+              onLoad={(e) => {
+                e.currentTarget.classList.add('loaded');
+              }}
+              onError={(e) => {
+                e.currentTarget.src = '';
+                e.currentTarget.alt = 'Imagen no disponible';
+              }}
+            />
             <h3>{product.name}</h3>
             <p>{product.description}</p>
             <div className="product-info">

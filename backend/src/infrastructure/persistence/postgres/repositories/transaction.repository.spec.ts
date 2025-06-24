@@ -3,7 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { TransactionRepositoryPg } from './transaction.repository';
 import { TransactionOrmEntity } from '../entities/transaction.orm-entity';
-import { Transaction, TransactionStatus } from '../../../../domain/entities/transaction.entity';
+import {
+  Transaction,
+  TransactionStatus,
+} from '../../../../domain/entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
@@ -32,7 +35,9 @@ describe('TransactionRepositoryPg (Integration)', () => {
     }).compile();
 
     repository = module.get<TransactionRepositoryPg>(TransactionRepositoryPg);
-    typeOrmRepo = module.get<Repository<TransactionOrmEntity>>(getRepositoryToken(TransactionOrmEntity));
+    typeOrmRepo = module.get<Repository<TransactionOrmEntity>>(
+      getRepositoryToken(TransactionOrmEntity),
+    );
   });
 
   beforeEach(async () => {
@@ -61,7 +66,9 @@ describe('TransactionRepositoryPg (Integration)', () => {
 
       // Assert
       expect(transaction.id).toBeDefined();
-      expect(transaction.productId).toBe('a3e1b2c4-1234-5678-9abc-def012345678');
+      expect(transaction.productId).toBe(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+      );
       expect(transaction.reference).toBe('ref-456');
       expect(transaction.amountInCents).toBe(100000);
       expect(transaction.status).toBe('PENDING');
@@ -71,7 +78,9 @@ describe('TransactionRepositoryPg (Integration)', () => {
       // Verify in database
       const dbTransaction = await typeOrmRepo.findOneBy({ id: transaction.id });
       expect(dbTransaction).toBeDefined();
-      expect(dbTransaction?.productId).toBe('a3e1b2c4-1234-5678-9abc-def012345678');
+      expect(dbTransaction?.productId).toBe(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+      );
       expect(dbTransaction?.status).toBe('PENDING');
     });
 
@@ -126,19 +135,25 @@ describe('TransactionRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(transactionData);
 
       // Act
-      const transaction = await repository.findById('b4f2c3d5-2345-6789-abcd-ef1234567890');
+      const transaction = await repository.findById(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+      );
 
       // Assert
       expect(transaction).toBeDefined();
       expect(transaction?.id).toBe('b4f2c3d5-2345-6789-abcd-ef1234567890');
-      expect(transaction?.productId).toBe('a3e1b2c4-1234-5678-9abc-def012345678');
+      expect(transaction?.productId).toBe(
+        'a3e1b2c4-1234-5678-9abc-def012345678',
+      );
       expect(transaction?.reference).toBe('ref-456');
       expect(transaction?.status).toBe('PENDING');
     });
 
     it('should return null if transaction not found', async () => {
       // Act
-      const transaction = await repository.findById('b4f2c3d5-2345-6789-abcd-ef1234567890');
+      const transaction = await repository.findById(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+      );
 
       // Assert
       expect(transaction).toBeNull();
@@ -192,14 +207,21 @@ describe('TransactionRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(transactionData);
 
       // Act
-      const updatedTransaction = await repository.updateStatus('b4f2c3d5-2345-6789-abcd-ef1234567890', 'APPROVED');
+      const updatedTransaction = await repository.updateStatus(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+        'APPROVED',
+      );
 
       // Assert
       expect(updatedTransaction.status).toBe('APPROVED');
-      expect(updatedTransaction.id).toBe('b4f2c3d5-2345-6789-abcd-ef1234567890');
+      expect(updatedTransaction.id).toBe(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+      );
 
       // Verify in database
-      const dbTransaction = await typeOrmRepo.findOneBy({ id: 'b4f2c3d5-2345-6789-abcd-ef1234567890' });
+      const dbTransaction = await typeOrmRepo.findOneBy({
+        id: 'b4f2c3d5-2345-6789-abcd-ef1234567890',
+      });
       expect(dbTransaction?.status).toBe('APPROVED');
     });
 
@@ -217,7 +239,10 @@ describe('TransactionRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(transactionData);
 
       // Act
-      const updatedTransaction = await repository.updateStatus('b4f2c3d5-2345-6789-abcd-ef1234567890', 'DECLINED');
+      const updatedTransaction = await repository.updateStatus(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+        'DECLINED',
+      );
 
       // Assert
       expect(updatedTransaction.status).toBe('DECLINED');
@@ -225,8 +250,14 @@ describe('TransactionRepositoryPg (Integration)', () => {
 
     it('should throw error if transaction not found', async () => {
       // Act & Assert
-      await expect(repository.updateStatus('a3e1b2c4-1234-5678-9abc-def012345678', 'APPROVED'))
-        .rejects.toThrow('Transaction with ID "a3e1b2c4-1234-5678-9abc-def012345678" not found');
+      await expect(
+        repository.updateStatus(
+          'a3e1b2c4-1234-5678-9abc-def012345678',
+          'APPROVED',
+        ),
+      ).rejects.toThrow(
+        'Transaction with ID "a3e1b2c4-1234-5678-9abc-def012345678" not found',
+      );
     });
 
     it('should handle status transitions', async () => {
@@ -243,11 +274,21 @@ describe('TransactionRepositoryPg (Integration)', () => {
       await typeOrmRepo.save(transactionData);
 
       // Act - Multiple status updates
-      await repository.updateStatus('b4f2c3d5-2345-6789-abcd-ef1234567890', 'APPROVED');
-      const approvedTransaction = await repository.findById('b4f2c3d5-2345-6789-abcd-ef1234567890');
-      
-      await repository.updateStatus('b4f2c3d5-2345-6789-abcd-ef1234567890', 'DECLINED');
-      const declinedTransaction = await repository.findById('b4f2c3d5-2345-6789-abcd-ef1234567890');
+      await repository.updateStatus(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+        'APPROVED',
+      );
+      const approvedTransaction = await repository.findById(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+      );
+
+      await repository.updateStatus(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+        'DECLINED',
+      );
+      const declinedTransaction = await repository.findById(
+        'b4f2c3d5-2345-6789-abcd-ef1234567890',
+      );
 
       // Assert
       expect(approvedTransaction?.status).toBe('APPROVED');
@@ -325,4 +366,4 @@ describe('TransactionRepositoryPg (Integration)', () => {
       expect(transaction.reference).toBe(longReference);
     });
   });
-}); 
+});

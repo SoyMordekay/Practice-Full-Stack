@@ -90,7 +90,7 @@ describe('Product', () => {
     it('should throw error when trying to decrease more than available stock', () => {
       // Act & Assert
       expect(() => product.decreaseStock(15)).toThrow(
-        'Insufficient stock for product "Test Product"'
+        'Insufficient stock for product "Test Product"',
       );
       expect(product.stock).toBe(10); // Stock should remain unchanged
     });
@@ -101,7 +101,7 @@ describe('Product', () => {
 
       // Act & Assert
       expect(() => product.decreaseStock(1)).toThrow(
-        'Insufficient stock for product "Test Product"'
+        'Insufficient stock for product "Test Product"',
       );
       expect(product.stock).toBe(0); // Stock should remain unchanged
     });
@@ -123,7 +123,7 @@ describe('Product', () => {
 
       // Act & Assert
       expect(() => product.decreaseStock(15)).toThrow(
-        'Insufficient stock for product "Special Product"'
+        'Insufficient stock for product "Special Product"',
       );
     });
 
@@ -215,7 +215,7 @@ describe('Product', () => {
 
       // Act & Assert
       expect(() => product.decreaseStock(15)).toThrow(
-        'Insufficient stock for product "Product with special chars: !@#$%^&*()"'
+        'Insufficient stock for product "Product with special chars: !@#$%^&*()"',
       );
     });
 
@@ -225,8 +225,8 @@ describe('Product', () => {
 
       // Act & Assert
       expect(() => product.decreaseStock(15)).toThrow(
-        'Insufficient stock for product ""'
+        'Insufficient stock for product ""',
       );
     });
   });
-}); 
+});

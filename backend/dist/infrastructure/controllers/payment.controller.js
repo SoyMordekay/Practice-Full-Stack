@@ -34,12 +34,15 @@ let PaymentController = class PaymentController {
         }
     }
     async getTransactionStatus(transactionId) {
-        const result = await this.getTransactionStatusUseCase.execute({ transactionId });
+        const result = await this.getTransactionStatusUseCase.execute({
+            transactionId,
+        });
         if (result.isSuccess) {
             return result.value;
         }
         else {
-            throw new common_1.HttpException(result.error?.message || 'Error al consultar el estado de la transacción', common_1.HttpStatus.BAD_REQUEST);
+            throw new common_1.HttpException(result.error?.message ||
+                'Error al consultar el estado de la transacción', common_1.HttpStatus.BAD_REQUEST);
         }
     }
 };

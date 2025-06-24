@@ -4,7 +4,10 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
-import { IWompiGateway, WompiPaymentData } from '../../../domain/gateways/IWompi.gateway';
+import {
+  IWompiGateway,
+  WompiPaymentData,
+} from '../../../domain/gateways/IWompi.gateway';
 import { lastValueFrom } from 'rxjs';
 
 describe('WompiGateway', () => {
@@ -32,9 +35,11 @@ describe('WompiGateway', () => {
     gateway = module.get<WompiGateway>(WompiGateway);
     httpService = module.get<HttpService>(HttpService);
     jest.clearAllMocks();
-    
+
     // Mock getAcceptanceToken method
-    jest.spyOn(gateway as any, 'getAcceptanceToken').mockResolvedValue('test-acceptance-token');
+    jest
+      .spyOn(gateway as any, 'getAcceptanceToken')
+      .mockResolvedValue('test-acceptance-token');
   });
 
   describe('createPayment', () => {
@@ -97,7 +102,10 @@ describe('WompiGateway', () => {
       mockHttpService.post.mockReturnValue(of(wompiApiResponse));
 
       // Act
-      const result = await gateway.createPayment({ ...paymentData, reference: 'ref-456' });
+      const result = await gateway.createPayment({
+        ...paymentData,
+        reference: 'ref-456',
+      });
 
       // Assert
       expect(result).toEqual({
@@ -110,10 +118,14 @@ describe('WompiGateway', () => {
 
     it('should throw error if Wompi API returns error', async () => {
       // Arrange
-      mockHttpService.post.mockReturnValue(throwError(() => new Error('Network error')));
+      mockHttpService.post.mockReturnValue(
+        throwError(() => new Error('Network error')),
+      );
 
       // Act & Assert
-      await expect(gateway.createPayment(paymentData)).rejects.toThrow('Error en Wompi API: Network error');
+      await expect(gateway.createPayment(paymentData)).rejects.toThrow(
+        'Error en Wompi API: Network error',
+      );
     });
 
     it('should throw error if Wompi API returns malformed data', async () => {
@@ -172,7 +184,7 @@ describe('WompiGateway', () => {
         finalized_at: '2024-01-01T00:01:00Z',
       });
       expect(mockHttpService.get).toHaveBeenCalledWith(
-        expect.stringContaining(`/transactions/${transactionId}`)
+        expect.stringContaining(`/transactions/${transactionId}`),
       );
     });
 
@@ -254,10 +266,14 @@ describe('WompiGateway', () => {
 
     it('should throw error if Wompi API returns error', async () => {
       // Arrange
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('Network error')));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('Network error')),
+      );
 
       // Act & Assert
-      await expect(gateway.getTransactionStatus(transactionId)).rejects.toThrow('No se pudo consultar el estado de la transacción en Wompi');
+      await expect(gateway.getTransactionStatus(transactionId)).rejects.toThrow(
+        'No se pudo consultar el estado de la transacción en Wompi',
+      );
     });
 
     it('should throw error if Wompi API returns 404', async () => {
@@ -269,13 +285,17 @@ describe('WompiGateway', () => {
         headers: {},
         config: { headers: {} } as any,
       };
-      mockHttpService.get.mockReturnValue(throwError(() => ({
-        response: wompiApiResponse,
-        message: 'Not Found'
-      })));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => ({
+          response: wompiApiResponse,
+          message: 'Not Found',
+        })),
+      );
 
       // Act & Assert
-      await expect(gateway.getTransactionStatus(transactionId)).rejects.toThrow('No se pudo consultar el estado de la transacción en Wompi');
+      await expect(gateway.getTransactionStatus(transactionId)).rejects.toThrow(
+        'No se pudo consultar el estado de la transacción en Wompi',
+      );
     });
 
     it('should throw error if Wompi API returns malformed data', async () => {
@@ -287,10 +307,14 @@ describe('WompiGateway', () => {
         headers: {},
         config: { headers: {} } as any,
       };
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('Malformed data')));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('Malformed data')),
+      );
 
       // Act & Assert
-      await expect(gateway.getTransactionStatus(transactionId)).rejects.toThrow('No se pudo consultar el estado de la transacción en Wompi');
+      await expect(gateway.getTransactionStatus(transactionId)).rejects.toThrow(
+        'No se pudo consultar el estado de la transacción en Wompi',
+      );
     });
 
     it('should handle missing optional fields gracefully', async () => {
@@ -332,4 +356,4 @@ describe('WompiGateway', () => {
   });
 
   // Puedes agregar más pruebas para otros métodos del gateway si existen
-}); 
+});

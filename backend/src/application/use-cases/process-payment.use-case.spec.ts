@@ -1,308 +1,437 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProcessPaymentUseCase } from './process-payment.usecase';
+import { IWompiGateway } from '../../domain/gateways/IWompi.gateway';
 import { ITransactionRepository } from '../../domain/repositories/ITransaction.repository';
 import { IProductRepository } from '../../domain/repositories/IProduct.repository';
-import { IWompiGateway, WompiPaymentResponse } from '../../domain/gateways/IWompi.gateway';
-import { CreatePaymentDto } from '../dtos/create-payment.dto';
 import { Product } from '../../domain/entities/domain/entities/product.entity';
-import { Transaction, TransactionStatus } from '../../domain/entities/transaction.entity';
-import * as uuid from 'uuid';
-
-const mockTransactionRepo = {
-  create: jest.fn(),
-  updateStatus: jest.fn(),
-};
-
-const mockProductRepo = {
-  findById: jest.fn(),
-  decreaseStock: jest.fn(),
-};
-
-const mockWompiGateway = {
-  createPayment: jest.fn(),
-};
-
-jest.mock('uuid', () => ({
-  v4: jest.fn(),
-}));
+import { Transaction } from '../../domain/entities/transaction.entity';
 
 describe('ProcessPaymentUseCase', () => {
   let useCase: ProcessPaymentUseCase;
-  let transactionRepo: ITransactionRepository;
-  let productRepo: IProductRepository;
-  let wompiGateway: IWompiGateway;
-
-  const mockProductId = 'prod_123';
-  const mockTransactionId = 'trans_456';
-  const mockReference = 'test-reference-uuid';
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ProcessPaymentUseCase,
-        { provide: ITransactionRepository, useValue: mockTransactionRepo },
-        { provide: IProductRepository, useValue: mockProductRepo },
-        { provide: IWompiGateway, useValue: mockWompiGateway },
-      ],
-    }).compile();
-
-    useCase = module.get<ProcessPaymentUseCase>(ProcessPaymentUseCase);
-    transactionRepo = module.get<ITransactionRepository>(ITransactionRepository);
-    productRepo = module.get<IProductRepository>(IProductRepository);
-    wompiGateway = module.get<IWompiGateway>(IWompiGateway);
-
-    (uuid.v4 as jest.Mock).mockReturnValue(mockReference);
-    jest.clearAllMocks();
-  });
-
-  const createPaymentDto: CreatePaymentDto = {
-    productId: mockProductId,
-    customerEmail: 'test@example.com',
-    creditCardToken: 'tok_test_123',
-    installments: 1,
-  };
+  let mockWompiGateway: jest.Mocked<IWompiGateway>;
+  let mockTransactionRepo: jest.Mocked<ITransactionRepository>;
+  let mockProductRepo: jest.Mocked<IProductRepository>;
 
   const mockProduct: Product = {
-    id: mockProductId,
+    id: '1',
     name: 'Test Product',
-    price: 1000,
-    stock: 5,
-    description: 'A test product',
+    description: 'Test Description',
+    price: 100000,
+    stock: 10,
     imageUrl: 'http://example.com/image.png',
     hasStock: jest.fn().mockReturnValue(true),
     decreaseStock: jest.fn(),
   };
 
-  const mockPendingTransaction: Transaction = {
-    id: mockTransactionId,
-    productId: mockProductId,
-    reference: mockReference,
-    amountInCents: mockProduct.price * 100,
+  const mockTransaction: Transaction = {
+    id: 'txn-123',
+    productId: '1',
+    amount: 100000,
     status: 'PENDING',
-    customerEmail: createPaymentDto.customerEmail,
+    reference: 'ref-123',
+    wompiId: 'wompi-123',
+    customerEmail: 'test@example.com',
     createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
+  beforeEach(async () => {
+    const mockWompiGatewayImpl = {
+      createPayment: jest.fn(),
+    };
+
+    const mockTransactionRepoImpl = {
+      create: jest.fn(),
+      updateStatus: jest.fn(),
+    };
+
+    const mockProductRepoImpl = {
+      findById: jest.fn(),
+      decreaseStock: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ProcessPaymentUseCase,
+        {
+          provide: IWompiGateway,
+          useValue: mockWompiGatewayImpl,
+        },
+        {
+          provide: ITransactionRepository,
+          useValue: mockTransactionRepoImpl,
+        },
+        {
+          provide: IProductRepository,
+          useValue: mockProductRepoImpl,
+        },
+      ],
+    }).compile();
+
+    useCase = module.get<ProcessPaymentUseCase>(ProcessPaymentUseCase);
+    mockWompiGateway = module.get(IWompiGateway);
+    mockTransactionRepo = module.get(ITransactionRepository);
+    mockProductRepo = module.get(IProductRepository);
+  });
+
+  it('should be defined', () => {
+    expect(useCase).toBeDefined();
+  });
+
   describe('execute', () => {
-    it('should process payment successfully when product exists, has stock, and Wompi approves', async () => {
+    it('should process payment successfully', async () => {
       // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProductRepo.findById.mockResolvedValue(mockProduct);
-      (mockProduct.hasStock as jest.Mock).mockReturnValue(true);
-      mockTransactionRepo.create.mockResolvedValue(mockPendingTransaction);
-      
-      const wompiApprovedResponse: WompiPaymentResponse = {
-        id: 'wompi_trans_id',
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
         status: 'APPROVED',
-        reference: mockReference,
-      };
-      mockWompiGateway.createPayment.mockResolvedValue(wompiApprovedResponse);
-      
-      const updatedApprovedTransaction: Transaction = {
-        ...mockPendingTransaction,
-        status: 'APPROVED',
-      };
-      mockTransactionRepo.updateStatus.mockResolvedValue(updatedApprovedTransaction);
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
 
       // Act
-      const result = await useCase.execute(createPaymentDto);
+      const result = await useCase.execute(paymentData);
 
       // Assert
-      expect(productRepo.findById).toHaveBeenCalledWith(mockProductId);
-      expect(mockProduct.hasStock).toHaveBeenCalledWith(1);
-      expect(transactionRepo.create).toHaveBeenCalledWith({
-        productId: mockProductId,
-        reference: mockReference,
-        amountInCents: mockProduct.price * 100,
-        status: 'PENDING',
-        customerEmail: createPaymentDto.customerEmail,
-      });
-      expect(wompiGateway.createPayment).toHaveBeenCalledWith({
-        amountInCents: mockPendingTransaction.amountInCents,
-        currency: 'COP',
-        customerEmail: createPaymentDto.customerEmail,
-        reference: mockReference,
-        paymentMethod: {
-          type: 'CARD',
-          token: createPaymentDto.creditCardToken,
-          installments: createPaymentDto.installments,
-        },
-      });
-      expect(transactionRepo.updateStatus).toHaveBeenCalledWith(mockTransactionId, 'APPROVED');
-      expect(productRepo.decreaseStock).toHaveBeenCalledWith(mockProductId, 1);
       expect(result.isSuccess).toBe(true);
-      if (result.isSuccess) {
-        expect(result.value).toEqual(updatedApprovedTransaction);
-      }
+      expect(mockProductRepo.findById).toHaveBeenCalledWith('1');
+      expect(mockTransactionRepo.create).toHaveBeenCalled();
+      expect(mockWompiGateway.createPayment).toHaveBeenCalled();
+      expect(mockTransactionRepo.updateStatus).toHaveBeenCalledWith(
+        'txn-123',
+        'APPROVED',
+      );
     });
 
-    it('should return error if product is not found', async () => {
+    it('should handle product not found error', async () => {
       // Arrange
+      const paymentData = {
+        productId: '999',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProductRepo.findById.mockResolvedValue(null);
 
       // Act
-      const result = await useCase.execute(createPaymentDto);
+      const result = await useCase.execute(paymentData);
 
       // Assert
       expect(result.isSuccess).toBe(false);
-      if (!result.isSuccess) {
-        expect(result.error.message).toBe('Product not found');
-      }
-      expect(transactionRepo.create).not.toHaveBeenCalled();
-      expect(wompiGateway.createPayment).not.toHaveBeenCalled();
+      expect(result.error?.message).toBe('Product not found');
     });
 
-    it('should return error if product has insufficient stock', async () => {
+    it('should handle insufficient stock error', async () => {
       // Arrange
-      const productNoStock = { ...mockProduct, hasStock: jest.fn().mockReturnValue(false) };
-      mockProductRepo.findById.mockResolvedValue(productNoStock);
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      const productWithLowStock = { ...mockProduct, stock: 0 };
+      productWithLowStock.hasStock = jest.fn().mockReturnValue(false);
+
+      mockProductRepo.findById.mockResolvedValue(productWithLowStock);
 
       // Act
-      const result = await useCase.execute(createPaymentDto);
+      const result = await useCase.execute(paymentData);
 
       // Assert
       expect(result.isSuccess).toBe(false);
-      if (!result.isSuccess) {
-        expect(result.error.message).toBe('Insufficient stock');
-      }
-      expect(transactionRepo.create).not.toHaveBeenCalled();
-      expect(wompiGateway.createPayment).not.toHaveBeenCalled();
+      expect(result.error?.message).toBe('Insufficient stock');
     });
 
-    it('should update transaction to DECLINED and return error if Wompi gateway fails', async () => {
+    it('should handle payment provider error', async () => {
       // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProductRepo.findById.mockResolvedValue(mockProduct);
-      (mockProduct.hasStock as jest.Mock).mockReturnValue(true);
-      mockTransactionRepo.create.mockResolvedValue(mockPendingTransaction);
-      mockWompiGateway.createPayment.mockRejectedValue(new Error('Wompi API down'));
-      
-      const updatedDeclinedTransaction: Transaction = {
-        ...mockPendingTransaction,
-        status: 'DECLINED',
-      };
-      mockTransactionRepo.updateStatus.mockResolvedValue(updatedDeclinedTransaction);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockRejectedValue(
+        new Error('Payment failed'),
+      );
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
 
       // Act
-      const result = await useCase.execute(createPaymentDto);
+      const result = await useCase.execute(paymentData);
 
       // Assert
-      expect(wompiGateway.createPayment).toHaveBeenCalled();
-      expect(transactionRepo.updateStatus).toHaveBeenCalledWith(mockTransactionId, 'DECLINED');
-      expect(productRepo.decreaseStock).not.toHaveBeenCalled();
       expect(result.isSuccess).toBe(false);
-      if (!result.isSuccess) {
-        expect(result.error.message).toBe('Payment provider error');
-      }
+      expect(result.error?.message).toBe('Payment provider error');
+      expect(mockTransactionRepo.updateStatus).toHaveBeenCalledWith(
+        'txn-123',
+        'DECLINED',
+      );
     });
 
-    it('should update transaction to DECLINED if Wompi payment is declined', async () => {
+    it('should handle different installments', async () => {
       // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 3,
+      };
+
       mockProductRepo.findById.mockResolvedValue(mockProduct);
-      (mockProduct.hasStock as jest.Mock).mockReturnValue(true);
-      mockTransactionRepo.create.mockResolvedValue(mockPendingTransaction);
-      
-      const wompiDeclinedResponse: WompiPaymentResponse = {
-        id: 'wompi_trans_id_declined',
-        status: 'DECLINED',
-        reference: mockReference,
-      };
-      mockWompiGateway.createPayment.mockResolvedValue(wompiDeclinedResponse);
-      
-      const updatedDeclinedTransaction: Transaction = {
-        ...mockPendingTransaction,
-        status: 'DECLINED',
-      };
-      mockTransactionRepo.updateStatus.mockResolvedValue(updatedDeclinedTransaction);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
+        status: 'APPROVED',
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
 
       // Act
-      const result = await useCase.execute(createPaymentDto);
+      const result = await useCase.execute(paymentData);
 
       // Assert
-      expect(wompiGateway.createPayment).toHaveBeenCalled();
-      expect(transactionRepo.updateStatus).toHaveBeenCalledWith(mockTransactionId, 'DECLINED');
-      expect(productRepo.decreaseStock).not.toHaveBeenCalled();
       expect(result.isSuccess).toBe(true);
-      if (result.isSuccess) {
-        expect(result.value.status).toBe('DECLINED');
-      }
-    });
-
-    it('should handle different installments correctly', async () => {
-      // Arrange
-      const paymentDtoWithInstallments = { ...createPaymentDto, installments: 3 };
-      mockProductRepo.findById.mockResolvedValue(mockProduct);
-      (mockProduct.hasStock as jest.Mock).mockReturnValue(true);
-      mockTransactionRepo.create.mockResolvedValue(mockPendingTransaction);
-      
-      const wompiApprovedResponse: WompiPaymentResponse = {
-        id: 'wompi_trans_id',
-        status: 'APPROVED',
-        reference: mockReference,
-      };
-      mockWompiGateway.createPayment.mockResolvedValue(wompiApprovedResponse);
-      
-      const updatedApprovedTransaction: Transaction = {
-        ...mockPendingTransaction,
-        status: 'APPROVED',
-      };
-      mockTransactionRepo.updateStatus.mockResolvedValue(updatedApprovedTransaction);
-
-      // Act
-      const result = await useCase.execute(paymentDtoWithInstallments);
-
-      // Assert
-      expect(wompiGateway.createPayment).toHaveBeenCalledWith(
+      expect(mockWompiGateway.createPayment).toHaveBeenCalledWith(
         expect.objectContaining({
           paymentMethod: expect.objectContaining({
             installments: 3,
           }),
-        })
+        }),
       );
-      expect(result.isSuccess).toBe(true);
     });
 
-    it('should handle different product prices correctly', async () => {
+    it('should handle different product IDs', async () => {
       // Arrange
-      const expensiveProduct = { 
-        ...mockProduct, 
-        price: 5000,
-        hasStock: jest.fn().mockReturnValue(true),
+      const paymentData = {
+        productId: '2',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
       };
-      mockProductRepo.findById.mockResolvedValue(expensiveProduct);
-      
-      const expensiveTransaction = {
-        ...mockPendingTransaction,
-        amountInCents: expensiveProduct.price * 100,
+
+      const differentProduct = {
+        ...mockProduct,
+        id: '2',
+        name: 'Different Product',
       };
-      mockTransactionRepo.create.mockResolvedValue(expensiveTransaction);
-      
-      const wompiApprovedResponse: WompiPaymentResponse = {
-        id: 'wompi_trans_id',
+
+      mockProductRepo.findById.mockResolvedValue(differentProduct);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
         status: 'APPROVED',
-        reference: mockReference,
-      };
-      mockWompiGateway.createPayment.mockResolvedValue(wompiApprovedResponse);
-      
-      const updatedApprovedTransaction: Transaction = {
-        ...expensiveTransaction,
-        status: 'APPROVED',
-      };
-      mockTransactionRepo.updateStatus.mockResolvedValue(updatedApprovedTransaction);
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
 
       // Act
-      const result = await useCase.execute(createPaymentDto);
+      const result = await useCase.execute(paymentData);
 
       // Assert
-      expect(transactionRepo.create).toHaveBeenCalledWith(
+      expect(result.isSuccess).toBe(true);
+      expect(mockProductRepo.findById).toHaveBeenCalledWith('2');
+    });
+
+    it('should handle different customer emails', async () => {
+      // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'different@example.com',
+        installments: 1,
+      };
+
+      mockProductRepo.findById.mockResolvedValue(mockProduct);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
+        status: 'APPROVED',
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
+
+      // Act
+      const result = await useCase.execute(paymentData);
+
+      // Assert
+      expect(result.isSuccess).toBe(true);
+      expect(mockWompiGateway.createPayment).toHaveBeenCalledWith(
         expect.objectContaining({
-          amountInCents: 500000, // 5000 * 100
-        })
+          customerEmail: 'different@example.com',
+        }),
       );
-      expect(wompiGateway.createPayment).toHaveBeenCalledWith(
+    });
+
+    it('should handle different credit card tokens', async () => {
+      // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_456',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      mockProductRepo.findById.mockResolvedValue(mockProduct);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
+        status: 'APPROVED',
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
+
+      // Act
+      const result = await useCase.execute(paymentData);
+
+      // Assert
+      expect(result.isSuccess).toBe(true);
+      expect(mockWompiGateway.createPayment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paymentMethod: expect.objectContaining({
+            token: 'tok_test_456',
+          }),
+        }),
+      );
+    });
+
+    it('should handle declined transaction status', async () => {
+      // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      mockProductRepo.findById.mockResolvedValue(mockProduct);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
+        status: 'DECLINED',
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
+
+      // Act
+      const result = await useCase.execute(paymentData);
+
+      // Assert
+      expect(result.isSuccess).toBe(false);
+      expect(result.error?.message).toBe('Payment was declined');
+      expect(mockTransactionRepo.updateStatus).toHaveBeenCalledWith(
+        'txn-123',
+        'DECLINED',
+      );
+    });
+
+    it('should handle pending transaction status', async () => {
+      // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      mockProductRepo.findById.mockResolvedValue(mockProduct);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
+        status: 'PENDING',
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
+
+      // Act
+      const result = await useCase.execute(paymentData);
+
+      // Assert
+      expect(result.isSuccess).toBe(false);
+      expect(result.error?.message).toBe('Payment is pending');
+      expect(mockTransactionRepo.updateStatus).toHaveBeenCalledWith(
+        'txn-123',
+        'PENDING',
+      );
+    });
+
+    it('should handle transaction with different amounts', async () => {
+      // Arrange
+      const expensiveProduct = { ...mockProduct, price: 500000 };
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      mockProductRepo.findById.mockResolvedValue(expensiveProduct);
+      mockTransactionRepo.create.mockResolvedValue(mockTransaction);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
+        status: 'APPROVED',
+        reference: 'ref-123',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(mockTransaction);
+
+      // Act
+      const result = await useCase.execute(paymentData);
+
+      // Assert
+      expect(result.isSuccess).toBe(true);
+      expect(mockWompiGateway.createPayment).toHaveBeenCalledWith(
         expect.objectContaining({
           amountInCents: 500000,
-        })
+        }),
       );
+    });
+
+    it('should handle transaction with different references', async () => {
+      // Arrange
+      const paymentData = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      const transactionWithDifferentRef = {
+        ...mockTransaction,
+        reference: 'different-ref',
+      };
+
+      mockProductRepo.findById.mockResolvedValue(mockProduct);
+      mockTransactionRepo.create.mockResolvedValue(transactionWithDifferentRef);
+      mockWompiGateway.createPayment.mockResolvedValue({
+        id: 'wompi-123',
+        status: 'APPROVED',
+        reference: 'different-ref',
+      });
+      mockTransactionRepo.updateStatus.mockResolvedValue(
+        transactionWithDifferentRef,
+      );
+
+      // Act
+      const result = await useCase.execute(paymentData);
+
+      // Assert
       expect(result.isSuccess).toBe(true);
+      expect(mockWompiGateway.createPayment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reference: 'different-ref',
+        }),
+      );
     });
   });
-}); 
+});

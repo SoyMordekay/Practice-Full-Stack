@@ -2,7 +2,7 @@ export class Product {
   id: string;
   name: string;
   description: string;
-  price: number; 
+  price: number;
   stock: number;
   imageUrl: string;
 
@@ -22,7 +22,6 @@ export class Product {
    */
   public decreaseStock(quantity: number): void {
     if (!this.hasStock(quantity)) {
-      
       throw new Error(`Insufficient stock for product "${this.name}"`);
     }
     this.stock -= quantity;

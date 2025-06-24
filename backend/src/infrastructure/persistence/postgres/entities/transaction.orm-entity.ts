@@ -1,4 +1,9 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'transactions' })
 export class TransactionOrmEntity {
@@ -10,7 +15,7 @@ export class TransactionOrmEntity {
 
   @Column()
   amountInCents: number;
-  
+
   @Column()
   status: string;
 
@@ -23,7 +28,7 @@ export class TransactionOrmEntity {
   @CreateDateColumn()
   createdAt: Date;
 
-   @Column({ type: 'varchar', nullable: true }) // O el tipo que Wompi use para sus IDs
+  @Column({ type: 'varchar', nullable: true }) // O el tipo que Wompi use para sus IDs
   wompiTransactionId?: string;
 
   @Column({ type: 'jsonb', nullable: true }) // 'jsonb' es bueno para PostgreSQL

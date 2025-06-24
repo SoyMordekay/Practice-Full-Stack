@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ProcessPaymentUseCase } from '../../application/use-cases/process-payment.usecase';
 import { GetTransactionStatusUseCase } from '../../application/use-cases/get-transaction-status.usecase';
 import { CreatePaymentDto } from '../../application/dtos/create-payment.dto';
@@ -23,14 +31,17 @@ export class PaymentController {
 
   @Get(':transactionId/status')
   async getTransactionStatus(@Param('transactionId') transactionId: string) {
-    const result = await this.getTransactionStatusUseCase.execute({ transactionId });
+    const result = await this.getTransactionStatusUseCase.execute({
+      transactionId,
+    });
 
     if (result.isSuccess) {
       return result.value;
     } else {
       throw new HttpException(
-        result.error?.message || 'Error al consultar el estado de la transacción',
-        HttpStatus.BAD_REQUEST
+        result.error?.message ||
+          'Error al consultar el estado de la transacción',
+        HttpStatus.BAD_REQUEST,
       );
     }
   }

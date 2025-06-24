@@ -1,54 +1,145 @@
-# React + TypeScript + Vite
+# 🛒 Full Stack Technical - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern React application for credit card payment onboarding and product store, built with **React**, **TypeScript**, **Vite** and **Redux Toolkit**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Tech Stack
 
-## Expanding the ESLint configuration
+- [React](https://reactjs.org/) (UI library)
+- [TypeScript](https://www.typescriptlang.org/) (Type safety)
+- [Vite](https://vitejs.dev/) (Build tool)
+- [Redux Toolkit](https://redux-toolkit.js.org/) (State management)
+- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) (Testing)
+- [Jest](https://jestjs.io/) (Test runner)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## ⚙️ Setup & Installation
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. **Clone the repo:**
+   ```bash
+   git clone <your-repo-url>
+   cd frontend
+   ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+3. **Configure environment variables:**  
+   Create a `.env` file:
+   ```
+   VITE_API_URL=http://localhost:3000
+   VITE_WOMPI_PUBLIC_KEY=your_wompi_public_key
+   ```
+
+---
+
+## ▶️ Running the App
+
+- **Development:**
+  ```bash
+  npm run dev
+  ```
+  > App will be available at `http://localhost:5173`
+
+- **Production build:**
+  ```bash
+  npm run build
+  npm run preview
+  ```
+
+---
+
+## 🧪 Running Tests & Coverage
+
+- **Unit tests:**
+  ```bash
+  npm run test
+  ```
+- **Test coverage:**
+  ```bash
+  npm run test:coverage
+  ```
+  > Aim for **80%+** coverage for full points.
+
+---
+
+## 🎨 Features
+
+- **Product Catalog:** Browse and view products
+- **Payment Processing:** Credit card payment with Wompi integration
+- **Responsive Design:** Works on desktop, tablet, and mobile
+- **Real-time Status:** Check payment transaction status
+- **Modern UI/UX:** Clean, intuitive interface
+
+---
+
+## 📱 Screenshots
+
+> Add screenshots of your app here:
+> - Home page
+> - Product list
+> - Payment form
+> - Success/error states
+
+---
+
+## 🎯 User Flow
+
+1. **Browse Products:** User sees available products
+2. **Select Product:** Choose item to purchase
+3. **Payment Form:** Enter credit card details
+4. **Processing:** Real-time payment status
+5. **Confirmation:** Success or error feedback
+
+---
+
+## ☁️ Deployment
+
+- Deploy on [Vercel](https://vercel.com/), [Netlify](https://netlify.com/), [Railway](https://railway.app/), etc.
+- **Production must use HTTPS.**
+- Add your deployed app URL here:  
+  `https://your-frontend-url.com`
+
+---
+
+## 🔒 Security
+
+- Environment variables for sensitive data
+- HTTPS enforced in production
+- Input validation and sanitization
+- Secure payment processing
+
+---
+
+## 📱 Responsive Design
+
+- Mobile-first approach
+- Cross-browser compatibility
+- Touch-friendly interface
+- Optimized for all screen sizes
+
+---
+
+## 🎨 CSS Skills
+
+- Modern CSS with Flexbox and Grid
+- Smooth animations and transitions
+- Hover effects and micro-interactions
+- Clean, maintainable stylesheets
+
+---
+
+## 👤 Author
+
+- Your Name
+- [LinkedIn](#) | [GitHub](#)
+
+---
+
+## 📄 License
+
+MIT

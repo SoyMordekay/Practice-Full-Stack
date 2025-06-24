@@ -4,7 +4,7 @@ export interface WompiPaymentData {
   customerEmail: string;
   paymentMethod: {
     type: 'CARD';
-    token: string; 
+    token: string;
     installments: number;
   };
   reference: string;

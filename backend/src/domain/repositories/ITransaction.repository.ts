@@ -1,4 +1,8 @@
-import { Transaction, CreateTransactionData, TransactionStatus } from '../entities/transaction.entity';
+import {
+  Transaction,
+  CreateTransactionData,
+  TransactionStatus,
+} from '../entities/transaction.entity';
 
 export const ITransactionRepository = Symbol('ITransactionRepository');
 
@@ -26,5 +30,4 @@ export interface ITransactionRepository {
   updateStatus(id: string, status: TransactionStatus): Promise<Transaction>;
 
   findByReference(reference: string): Promise<Transaction | null>;
-  
 }

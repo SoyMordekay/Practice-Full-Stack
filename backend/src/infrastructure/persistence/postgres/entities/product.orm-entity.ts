@@ -7,7 +7,7 @@ export class ProductOrmEntity {
 
   @Column()
   name: string;
-  
+
   @Column('text')
   description: string;
 
@@ -16,7 +16,7 @@ export class ProductOrmEntity {
 
   @Column()
   stock: number;
-  
+
   @Column()
   imageUrl: string;
 }

@@ -28,5 +28,7 @@ export const IWompiGateway = Symbol('IWompiGateway');
 
 export interface IWompiGateway {
   createPayment(data: WompiPaymentData): Promise<WompiPaymentResponse>;
-  getTransactionStatus(transactionId: string): Promise<WompiTransactionStatusResponse>;
+  getTransactionStatus(
+    transactionId: string,
+  ): Promise<WompiTransactionStatusResponse>;
 }

@@ -48,6 +48,7 @@ export declare class WompiGateway implements IWompiGateway {
     private readonly WOMPI_INTEGRITY_KEY;
     private readonly WOMPI_EVENTS_SECRET;
     private acceptanceToken;
+    private readonly axiosInstance;
     readonly TEST_CARDS: WompiTestCards;
     constructor(configService: ConfigService, httpService: HttpService);
     private getAcceptanceToken;

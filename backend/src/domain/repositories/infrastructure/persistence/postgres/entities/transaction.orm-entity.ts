@@ -1,4 +1,9 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'transactions' })
 export class TransactionOrmEntity {
@@ -10,7 +15,7 @@ export class TransactionOrmEntity {
 
   @Column()
   amountInCents: number;
-  
+
   @Column()
   status: string;
 

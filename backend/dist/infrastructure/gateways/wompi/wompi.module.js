@@ -17,10 +17,7 @@ let WompiModule = class WompiModule {
 exports.WompiModule = WompiModule;
 exports.WompiModule = WompiModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            axios_1.HttpModule,
-            config_1.ConfigModule,
-        ],
+        imports: [axios_1.HttpModule, config_1.ConfigModule],
         controllers: [web_hook_controller_1.WompiWebhookController],
         providers: [wompi_gateway_1.WompiGateway],
         exports: [wompi_gateway_1.WompiGateway],

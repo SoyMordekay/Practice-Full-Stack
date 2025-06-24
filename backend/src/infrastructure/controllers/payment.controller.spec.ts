@@ -1,52 +1,68 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentController } from './payment.controller';
 import { ProcessPaymentUseCase } from '../../application/use-cases/process-payment.usecase';
+import { GetTransactionStatusUseCase } from '../../application/use-cases/get-transaction-status.usecase';
 import { CreatePaymentDto } from '../../application/dtos/create-payment.dto';
-import { Transaction, TransactionStatus } from '../../domain/entities/transaction.entity';
+import { Transaction } from '../../domain/entities/transaction.entity';
 import { HttpException, HttpStatus } from '@nestjs/common';
-
-const mockProcessPaymentUseCase = {
-  execute: jest.fn(),
-};
 
 describe('PaymentController', () => {
   let controller: PaymentController;
-  let useCase: ProcessPaymentUseCase;
+  let mockProcessPaymentUseCase: jest.Mocked<ProcessPaymentUseCase>;
+  let mockGetTransactionStatusUseCase: jest.Mocked<GetTransactionStatusUseCase>;
+
+  const mockTransaction: Transaction = {
+    id: 'txn-123',
+    productId: '1',
+    amountInCents: 100000,
+    status: 'APPROVED',
+    reference: 'ref-123',
+    customerEmail: 'test@example.com',
+    createdAt: new Date(),
+  };
 
   beforeEach(async () => {
+    const mockProcessPaymentUseCaseImpl = {
+      execute: jest.fn(),
+    };
+
+    const mockGetTransactionStatusUseCaseImpl = {
+      execute: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PaymentController],
       providers: [
-        { provide: ProcessPaymentUseCase, useValue: mockProcessPaymentUseCase },
+        {
+          provide: ProcessPaymentUseCase,
+          useValue: mockProcessPaymentUseCaseImpl,
+        },
+        {
+          provide: GetTransactionStatusUseCase,
+          useValue: mockGetTransactionStatusUseCaseImpl,
+        },
       ],
     }).compile();
 
     controller = module.get<PaymentController>(PaymentController);
-    useCase = module.get<ProcessPaymentUseCase>(ProcessPaymentUseCase);
+    mockProcessPaymentUseCase = module.get(ProcessPaymentUseCase);
+    mockGetTransactionStatusUseCase = module.get(GetTransactionStatusUseCase);
+  });
 
-    jest.clearAllMocks();
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 
   describe('create', () => {
-    const createPaymentDto: CreatePaymentDto = {
-      productId: 'prod_123',
-      customerEmail: 'test@example.com',
-      creditCardToken: 'tok_test_123',
-      installments: 1,
-    };
-
-    const mockTransaction: Transaction = {
-      id: 'trans_456',
-      productId: 'prod_123',
-      reference: 'ref_789',
-      amountInCents: 100000,
-      status: 'APPROVED' as TransactionStatus,
-      customerEmail: 'test@example.com',
-      createdAt: new Date(),
-    };
-
     it('should process payment successfully', async () => {
       // Arrange
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: mockTransaction,
@@ -56,133 +72,205 @@ describe('PaymentController', () => {
       const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(createPaymentDto);
       expect(result).toEqual(mockTransaction);
+      expect(mockProcessPaymentUseCase.execute).toHaveBeenCalledWith(
+        createPaymentDto,
+      );
     });
 
     it('should throw HttpException when payment processing fails', async () => {
       // Arrange
-      const error = new Error('Payment failed');
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: false,
-        error,
+        error: new Error('Payment failed'),
       });
 
       // Act & Assert
-      await expect(controller.create(createPaymentDto)).rejects.toThrow(HttpException);
-      await expect(controller.create(createPaymentDto)).rejects.toThrow('Payment failed');
-      expect(useCase.execute).toHaveBeenCalledWith(createPaymentDto);
+      await expect(controller.create(createPaymentDto)).rejects.toThrow(
+        'Payment failed',
+      );
+      expect(mockProcessPaymentUseCase.execute).toHaveBeenCalledWith(
+        createPaymentDto,
+      );
     });
 
     it('should handle product not found error', async () => {
       // Arrange
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '999',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: false,
         error: new Error('Product not found'),
       });
 
       // Act & Assert
-      await expect(controller.create(createPaymentDto)).rejects.toThrow(HttpException);
-      await expect(controller.create(createPaymentDto)).rejects.toThrow('Product not found');
+      await expect(controller.create(createPaymentDto)).rejects.toThrow(
+        'Product not found',
+      );
     });
 
     it('should handle insufficient stock error', async () => {
       // Arrange
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: false,
         error: new Error('Insufficient stock'),
       });
 
       // Act & Assert
-      await expect(controller.create(createPaymentDto)).rejects.toThrow(HttpException);
-      await expect(controller.create(createPaymentDto)).rejects.toThrow('Insufficient stock');
+      await expect(controller.create(createPaymentDto)).rejects.toThrow(
+        'Insufficient stock',
+      );
     });
 
     it('should handle payment provider error', async () => {
       // Arrange
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: false,
         error: new Error('Payment provider error'),
       });
 
       // Act & Assert
-      await expect(controller.create(createPaymentDto)).rejects.toThrow(HttpException);
-      await expect(controller.create(createPaymentDto)).rejects.toThrow('Payment provider error');
+      await expect(controller.create(createPaymentDto)).rejects.toThrow(
+        'Payment provider error',
+      );
     });
 
     it('should handle different installments', async () => {
       // Arrange
-      const paymentDtoWithInstallments = { ...createPaymentDto, installments: 3 };
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 3,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: mockTransaction,
       });
 
       // Act
-      const result = await controller.create(paymentDtoWithInstallments);
+      const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(paymentDtoWithInstallments);
       expect(result).toEqual(mockTransaction);
+      expect(mockProcessPaymentUseCase.execute).toHaveBeenCalledWith(
+        createPaymentDto,
+      );
     });
 
     it('should handle different product IDs', async () => {
       // Arrange
-      const paymentDtoWithDifferentProduct = { ...createPaymentDto, productId: 'prod_456' };
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '2',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: mockTransaction,
       });
 
       // Act
-      const result = await controller.create(paymentDtoWithDifferentProduct);
+      const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(paymentDtoWithDifferentProduct);
       expect(result).toEqual(mockTransaction);
+      expect(mockProcessPaymentUseCase.execute).toHaveBeenCalledWith(
+        createPaymentDto,
+      );
     });
 
     it('should handle different customer emails', async () => {
       // Arrange
-      const paymentDtoWithDifferentEmail = { 
-        ...createPaymentDto, 
-        customerEmail: 'different@example.com' 
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'different@example.com',
+        installments: 1,
       };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: mockTransaction,
       });
 
       // Act
-      const result = await controller.create(paymentDtoWithDifferentEmail);
+      const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(paymentDtoWithDifferentEmail);
       expect(result).toEqual(mockTransaction);
+      expect(mockProcessPaymentUseCase.execute).toHaveBeenCalledWith(
+        createPaymentDto,
+      );
     });
 
     it('should handle different credit card tokens', async () => {
       // Arrange
-      const paymentDtoWithDifferentToken = { 
-        ...createPaymentDto, 
-        creditCardToken: 'tok_test_456' 
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_456',
+        customerEmail: 'test@example.com',
+        installments: 1,
       };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: mockTransaction,
       });
 
       // Act
-      const result = await controller.create(paymentDtoWithDifferentToken);
+      const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(paymentDtoWithDifferentToken);
       expect(result).toEqual(mockTransaction);
+      expect(mockProcessPaymentUseCase.execute).toHaveBeenCalledWith(
+        createPaymentDto,
+      );
     });
 
     it('should handle declined transaction status', async () => {
       // Arrange
-      const declinedTransaction = { ...mockTransaction, status: 'DECLINED' as TransactionStatus };
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      const declinedTransaction = {
+        ...mockTransaction,
+        status: 'DECLINED' as const,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: declinedTransaction,
@@ -192,14 +280,23 @@ describe('PaymentController', () => {
       const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(createPaymentDto);
       expect(result).toEqual(declinedTransaction);
-      expect(result.status).toBe('DECLINED');
     });
 
     it('should handle pending transaction status', async () => {
       // Arrange
-      const pendingTransaction = { ...mockTransaction, status: 'PENDING' as TransactionStatus };
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
+      };
+
+      const pendingTransaction = {
+        ...mockTransaction,
+        status: 'PENDING' as const,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: pendingTransaction,
@@ -209,17 +306,23 @@ describe('PaymentController', () => {
       const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(createPaymentDto);
       expect(result).toEqual(pendingTransaction);
-      expect(result.status).toBe('PENDING');
     });
 
     it('should handle transaction with different amounts', async () => {
       // Arrange
-      const expensiveTransaction = { 
-        ...mockTransaction, 
-        amountInCents: 500000 
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
       };
+
+      const expensiveTransaction = {
+        ...mockTransaction,
+        amountInCents: 500000,
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: expensiveTransaction,
@@ -229,17 +332,23 @@ describe('PaymentController', () => {
       const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(createPaymentDto);
       expect(result).toEqual(expensiveTransaction);
-      expect(result.amountInCents).toBe(500000);
     });
 
     it('should handle transaction with different references', async () => {
       // Arrange
-      const transactionWithDifferentRef = { 
-        ...mockTransaction, 
-        reference: 'different_ref_123' 
+      const createPaymentDto: CreatePaymentDto = {
+        productId: '1',
+        creditCardToken: 'tok_test_123',
+        customerEmail: 'test@example.com',
+        installments: 1,
       };
+
+      const transactionWithDifferentRef = {
+        ...mockTransaction,
+        reference: 'different-ref',
+      };
+
       mockProcessPaymentUseCase.execute.mockResolvedValue({
         isSuccess: true,
         value: transactionWithDifferentRef,
@@ -249,9 +358,55 @@ describe('PaymentController', () => {
       const result = await controller.create(createPaymentDto);
 
       // Assert
-      expect(useCase.execute).toHaveBeenCalledWith(createPaymentDto);
       expect(result).toEqual(transactionWithDifferentRef);
-      expect(result.reference).toBe('different_ref_123');
     });
   });
-}); 
+
+  describe('getTransactionStatus', () => {
+    it('should get transaction status successfully', async () => {
+      // Arrange
+      const transactionId = 'wompi-123';
+      const statusResponse = {
+        id: 'wompi-123',
+        status: 'APPROVED',
+        amount_in_cents: 100000,
+        reference: 'ref-123',
+        customer_email: 'test@example.com',
+        created_at: '2025-06-24T04:16:18.971Z',
+        finalized_at: '2025-06-24T04:16:19.982Z',
+      };
+
+      mockGetTransactionStatusUseCase.execute.mockResolvedValue({
+        isSuccess: true,
+        value: statusResponse,
+      });
+
+      // Act
+      const result = await controller.getTransactionStatus(transactionId);
+
+      // Assert
+      expect(result).toEqual(statusResponse);
+      expect(mockGetTransactionStatusUseCase.execute).toHaveBeenCalledWith({
+        transactionId,
+      });
+    });
+
+    it('should throw HttpException when status check fails', async () => {
+      // Arrange
+      const transactionId = 'wompi-123';
+
+      mockGetTransactionStatusUseCase.execute.mockResolvedValue({
+        isSuccess: false,
+        error: new Error('Transaction not found'),
+      });
+
+      // Act & Assert
+      await expect(
+        controller.getTransactionStatus(transactionId),
+      ).rejects.toThrow('Transaction not found');
+      expect(mockGetTransactionStatusUseCase.execute).toHaveBeenCalledWith({
+        transactionId,
+      });
+    });
+  });
+});

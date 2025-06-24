@@ -55,7 +55,7 @@ let ProcessPaymentUseCase = class ProcessPaymentUseCase {
                 },
             });
         }
-        catch (e) {
+        catch {
             await this.transactionRepo.updateStatus(transaction.id, 'DECLINED');
             return { isSuccess: false, error: new Error('Payment provider error') };
         }

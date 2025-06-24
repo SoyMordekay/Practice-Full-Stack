@@ -12,51 +12,63 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProductRepositoryPg = void 0;
+exports.ProductRepository = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const product_entity_1 = require("../../../../domain/entities/domain/entities/product.entity");
 const product_orm_entity_1 = require("../entities/product.orm-entity");
-let ProductRepositoryPg = class ProductRepositoryPg {
-    typeOrmRepo;
-    constructor(typeOrmRepo) {
-        this.typeOrmRepo = typeOrmRepo;
-    }
-    toDomain(ormEntity) {
-        if (!ormEntity)
-            return null;
-        const domainProduct = new product_entity_1.Product();
-        Object.assign(domainProduct, ormEntity);
-        return domainProduct;
-    }
-    async findById(id) {
-        const ormProduct = await this.typeOrmRepo.findOneBy({ id });
-        return this.toDomain(ormProduct);
+let ProductRepository = class ProductRepository {
+    productRepository;
+    constructor(productRepository) {
+        this.productRepository = productRepository;
     }
     async findAll() {
-        const ormProducts = await this.typeOrmRepo.find();
-        return ormProducts.map(p => this.toDomain(p)).filter(Boolean);
+        const products = await this.productRepository.find();
+        return products.map(this.mapToDomain);
     }
-    async decreaseStock(id, quantity) {
-        const ormProduct = await this.typeOrmRepo.findOneBy({ id });
-        if (!ormProduct)
-            throw new common_1.NotFoundException(`Product with ID "${id}" not found`);
-        const domainProduct = this.toDomain(ormProduct);
-        domainProduct.decreaseStock(quantity);
-        await this.typeOrmRepo.update(id, { stock: domainProduct.stock });
-        return domainProduct;
+    async findById(id) {
+        const product = await this.productRepository.findOne({ where: { id } });
+        return product ? this.mapToDomain(product) : null;
     }
-    async save(productData) {
-        const ormEntity = this.typeOrmRepo.create(productData);
-        const savedOrmEntity = await this.typeOrmRepo.save(ormEntity);
-        return this.toDomain(savedOrmEntity);
+    async decreaseStock(productId, quantity) {
+        await this.productRepository
+            .createQueryBuilder()
+            .update(product_orm_entity_1.ProductOrmEntity)
+            .set({ stock: () => `stock - ${quantity}` })
+            .where('id = :id', { id: productId })
+            .execute();
+        const updatedProduct = await this.productRepository.findOne({
+            where: { id: productId },
+        });
+        if (!updatedProduct) {
+            throw new Error(`Product with ID "${productId}" not found`);
+        }
+        return this.mapToDomain(updatedProduct);
     }
+    async save(product) {
+        const ormEntity = this.productRepository.create(product);
+        const savedOrmEntity = await this.productRepository.save(ormEntity);
+        return this.mapToDomain(savedOrmEntity);
+    }
+    mapToDomain = (ormEntity) => {
+        return {
+            id: ormEntity.id,
+            name: ormEntity.name,
+            description: ormEntity.description,
+            price: ormEntity.price,
+            stock: ormEntity.stock,
+            imageUrl: ormEntity.imageUrl,
+            hasStock: (quantity) => ormEntity.stock >= quantity,
+            decreaseStock: (qty) => {
+                void this.decreaseStock(ormEntity.id, qty);
+            },
+        };
+    };
 };
-exports.ProductRepositoryPg = ProductRepositoryPg;
-exports.ProductRepositoryPg = ProductRepositoryPg = __decorate([
+exports.ProductRepository = ProductRepository;
+exports.ProductRepository = ProductRepository = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(product_orm_entity_1.ProductOrmEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository])
-], ProductRepositoryPg);
+], ProductRepository);
 //# sourceMappingURL=product.repository.js.map

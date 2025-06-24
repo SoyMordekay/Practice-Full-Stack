@@ -8,56 +8,61 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var SeedService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SeedService = void 0;
 const common_1 = require("@nestjs/common");
 const IProduct_repository_1 = require("../../../domain/repositories/IProduct.repository");
-let SeedService = SeedService_1 = class SeedService {
-    productRepo;
-    logger = new common_1.Logger(SeedService_1.name);
-    constructor(productRepo) {
-        this.productRepo = productRepo;
-    }
-    async onModuleInit() {
-        await this.seedProducts();
+let SeedService = class SeedService {
+    productRepository;
+    constructor(productRepository) {
+        this.productRepository = productRepository;
     }
     async seedProducts() {
-        const products = await this.productRepo.findAll();
-        if (products.length > 0) {
-            this.logger.log('Database already seeded with products. Skipping.');
-            return;
-        }
-        this.logger.log('Seeding products...');
-        const productsToCreate = [
+        const products = [
             {
-                name: 'T-Shirt "Code Life"',
-                description: 'La camiseta perfecta para largas noches de codificación.',
-                price: 25000,
-                stock: 50,
-                imageUrl: 'https://cdn.awsli.com.br/300x300/608/608801/produto/153700346/b06af391c1.jpg',
+                name: 'Laptop Gaming',
+                description: 'Potente laptop para gaming con gráficos dedicados',
+                price: 2500000,
+                stock: 10,
+                imageUrl: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500',
             },
             {
-                name: 'Taza "Hello World"',
-                description: 'Empieza tu día con el clásico saludo de todo programador.',
-                price: 15000,
-                stock: 100,
-                imageUrl: 'https://http2.mlstatic.com/D_NQ_NP_803078-MLU76019047524_052024-O.webp',
+                name: 'Smartphone Pro',
+                description: 'Smartphone de última generación con cámara profesional',
+                price: 1200000,
+                stock: 15,
+                imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500',
+            },
+            {
+                name: 'Auriculares Wireless',
+                description: 'Auriculares bluetooth con cancelación de ruido',
+                price: 350000,
+                stock: 25,
+                imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
+            },
+            {
+                name: 'Tablet Ultra',
+                description: 'Tablet premium con pantalla de alta resolución',
+                price: 1800000,
+                stock: 8,
+                imageUrl: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500',
+            },
+            {
+                name: 'Smartwatch Sport',
+                description: 'Reloj inteligente con GPS y monitoreo de salud',
+                price: 450000,
+                stock: 20,
+                imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500',
             },
         ];
-        for (const product of productsToCreate) {
-            await this.productRepo.save(product);
+        for (const productData of products) {
+            await this.productRepository.save(productData);
         }
-        this.logger.log('Seeding completed.');
     }
 };
 exports.SeedService = SeedService;
-exports.SeedService = SeedService = SeedService_1 = __decorate([
+exports.SeedService = SeedService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Inject)(IProduct_repository_1.IProductRepository)),
     __metadata("design:paramtypes", [Object])
 ], SeedService);
 //# sourceMappingURL=seed.service.js.map
