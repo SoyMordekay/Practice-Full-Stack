@@ -5,6 +5,8 @@ export declare class Product {
     price: number;
     stock: number;
     imageUrl: string;
+    createdAt?: Date;
+    updatedAt?: Date;
     hasStock(quantity: number): boolean;
     decreaseStock(quantity: number): void;
 }

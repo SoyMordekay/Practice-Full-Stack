@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity('customers')
+@Entity({ name: 'customers' })
 export class CustomerOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -8,26 +8,20 @@ export class CustomerOrmEntity {
   @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column()
   email: string;
 
   @Column()
   phone: string;
 
-  @Column()
-  street: string;
-
-  @Column()
-  city: string;
-
-  @Column()
-  state: string;
-
-  @Column()
-  zipCode: string;
-
-  @Column()
-  country: string;
+  @Column('jsonb')
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
 
   @CreateDateColumn()
   createdAt: Date;

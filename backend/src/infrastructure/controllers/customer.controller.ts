@@ -6,7 +6,9 @@ import { UpdateCustomerUseCase } from '../../application/use-cases/customer/upda
 import { DeleteCustomerUseCase } from '../../application/use-cases/customer/delete-customer.usecase';
 import { CreateCustomerRequest } from '../../application/use-cases/customer/create-customer.usecase';
 import { UpdateCustomerRequest } from '../../application/use-cases/customer/update-customer.usecase';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Clientes')
 @Controller('customers')
 export class CustomerController {
   constructor(
@@ -14,7 +16,7 @@ export class CustomerController {
     private readonly getAllCustomersUseCase: GetAllCustomersUseCase,
     private readonly getCustomerByIdUseCase: GetCustomerByIdUseCase,
     private readonly updateCustomerUseCase: UpdateCustomerUseCase,
-    private readonly deleteCustomerUseCase: DeleteCustomerUseCase,
+    private readonly deleteCustomerUseCase: DeleteCustomerUseCase
   ) {}
 
   @Post()
@@ -27,6 +29,8 @@ export class CustomerController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Obtener todos los clientes' })
+  @ApiResponse({ status: 200, description: 'Lista de clientes' })
   async findAll() {
     const result = await this.getAllCustomersUseCase.execute();
     if (!result.isSuccess) {
@@ -36,6 +40,9 @@ export class CustomerController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Obtener cliente por ID' })
+  @ApiResponse({ status: 200, description: 'Cliente encontrado' })
+  @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
   async findOne(@Param('id') id: string) {
     const result = await this.getCustomerByIdUseCase.execute({ id });
     if (!result.isSuccess) {

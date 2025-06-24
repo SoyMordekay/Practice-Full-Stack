@@ -5,6 +5,8 @@ import { PaymentModule } from './payment/payment.module';
 import { ProductModule } from './product/product.module';
 import { CustomerModule } from './customer/customer.module';
 import { DeliveryModule } from './delivery/delivery.module';
+import { SeedController } from './common/seeding/seed.controller';
+import { SeedService } from './common/seeding/seed.service';
 
 @Module({
   imports: [
@@ -26,7 +28,7 @@ import { DeliveryModule } from './delivery/delivery.module';
     CustomerModule,
     DeliveryModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [SeedController],
+  providers: [SeedService],
 })
 export class AppModule {}

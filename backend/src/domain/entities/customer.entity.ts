@@ -1,4 +1,4 @@
-export interface Customer {
+export class Customer {
   id: string;
   name: string;
   email: string;
@@ -10,8 +10,8 @@ export interface Customer {
     zipCode: string;
     country: string;
   };
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export type CreateCustomerData = Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>;

@@ -43,6 +43,9 @@ let ProductRepository = class ProductRepository {
         if (!updatedProduct) {
             throw new Error(`Product with ID "${productId}" not found`);
         }
+        if (updatedProduct.stock < 0) {
+            throw new Error(`Insufficient stock for product "${updatedProduct.name}"`);
+        }
         return this.mapToDomain(updatedProduct);
     }
     async save(product) {

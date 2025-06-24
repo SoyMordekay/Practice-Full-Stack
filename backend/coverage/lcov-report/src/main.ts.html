@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/12</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/12</span>
             </div>
         
             
@@ -83,7 +83,25 @@
 <a name='L18'></a><a href='#L18'>18</a>
 <a name='L19'></a><a href='#L19'>19</a>
 <a name='L20'></a><a href='#L20'>20</a>
-<a name='L21'></a><a href='#L21'>21</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -95,6 +113,19 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -103,8 +134,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { NestFactory } from '@nestjs/core';</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { NestFactory } from '@nestjs/core';</span>
 <span class="cstat-no" title="statement not covered" >import { AppModule } from './infrastructure/app.module'; </span>// O la ruta correcta
+<span class="cstat-no" title="statement not covered" >import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';</span>
+<span class="cstat-no" title="statement not covered" >import { ValidationPipe } from '@nestjs/common';</span>
 &nbsp;
 async function <span class="fstat-no" title="function not covered" >bootstrap(</span>) {
   const app = <span class="cstat-no" title="statement not covered" >await NestFactory.create(AppModule, {</span>
@@ -113,24 +147,38 @@ async function <span class="fstat-no" title="function not covered" >bootstrap(</
 &nbsp;
   // Habilitar CORS
 <span class="cstat-no" title="statement not covered" >  app.enableCors();</span>
-  
+&nbsp;
+  // Habilitar validación global de DTOs
+<span class="cstat-no" title="statement not covered" >  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));</span>
+&nbsp;
+  // Configuración de Swagger
+  const config = <span class="cstat-no" title="statement not covered" >new DocumentBuilder()</span>
+    .setTitle('Full Stack Technical API')
+    .setDescription('Documentación de la API para la tienda y pagos')
+    .setVersion('1.0')
+    .build();
+  const document = <span class="cstat-no" title="statement not covered" >SwaggerModule.createDocument(app, config);</span>
+<span class="cstat-no" title="statement not covered" >  SwaggerModule.setup('api/docs', app, document);</span>
+&nbsp;
   // Esto es necesario si quieres usar @RawBody() en el controlador.
   // Si solo usas @Body() y la firma viene en el payload como payload.signature.checksum, no es estrictamente necesario,
   // pero si la firma se calcula sobre el cuerpo crudo, sí.
   // Para la firma de eventos de Wompi, la firma se genera sobre campos específicos, no el cuerpo crudo.
   // Así que la validación que hice arriba (usando campos del payload) es la correcta.
   // El bodyParser: true es suficiente.
+  
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  await app.listen(3000);</span>
 }
-<span class="cstat-no" title="statement not covered" >bootstrap();</span></pre></td></tr></table></pre>
+<span class="cstat-no" title="statement not covered" >void bootstrap();</span>
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-24T03:40:55.181Z
+                at 2025-06-24T08:08:20.998Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -16,8 +16,8 @@ export interface Delivery {
     country: string;
   };
   notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export type CreateDeliveryData = Omit<Delivery, 'id' | 'createdAt' | 'updatedAt'>;

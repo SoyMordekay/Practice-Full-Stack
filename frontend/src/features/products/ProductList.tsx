@@ -1,16 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../../app/store';
 import { fetchProducts, type Product } from './productSlice';
-import { openPaymentModal } from '../payment/paymentSlice';
+import PaymentForm from '../payment/PaymentForm';
 import './ProductList.css';
 
 export const ProductList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handleBuyClick = (product: Product) => {
-  dispatch(openPaymentModal(product));
-};
+    setSelectedProduct(product);
+    setShowPaymentModal(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setSelectedProduct(null);
+    dispatch(fetchProducts());
+  };
 
   const { items: products, status, error } = useSelector((state: RootState) => state.products);
 
@@ -45,9 +54,17 @@ export const ProductList: React.FC = () => {
             <p>{product.description}</p>
             <div className="product-info">
               <span>Precio: ${product.price.toLocaleString('es-CO')}</span>
-              <span>Stock: {product.stock}</span>
+              <span className={`stock-badge ${product.stock === 0 ? 'out-of-stock' : product.stock < 5 ? 'low-stock' : ''}`}>
+                {product.stock === 0 ? 'Agotado' : `Stock: ${product.stock}`}
+              </span>
             </div>
-            <button onClick={() => handleBuyClick(product)}>Comprar</button>
+            <button 
+              onClick={() => handleBuyClick(product)}
+              disabled={product.stock === 0}
+              className={product.stock === 0 ? 'disabled' : ''}
+            >
+              {product.stock === 0 ? 'Sin stock' : 'Comprar'}
+            </button>
           </div>
         ))}
       </div>
@@ -57,9 +74,20 @@ export const ProductList: React.FC = () => {
   }
 
   return (
-    <section className="product-list-section">
-      <h2>Nuestros Productos</h2>
-      {content}
-    </section>
+    <>
+      <section className="product-list-section">
+        <h2>Nuestros Productos</h2>
+        {content}
+      </section>
+      
+      {showPaymentModal && selectedProduct && (
+        <PaymentForm
+          productId={selectedProduct.id}
+          productName={selectedProduct.name}
+          price={selectedProduct.price}
+          onClose={handleClosePaymentModal}
+        />
+      )}
+    </>
   );
 };

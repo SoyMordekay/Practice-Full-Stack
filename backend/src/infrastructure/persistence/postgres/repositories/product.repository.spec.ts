@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { ProductRepositoryPg } from './product.repository';
+import { ProductRepository } from './product.repository';
 import { ProductOrmEntity } from '../entities/product.orm-entity';
 import { Product } from '../../../../domain/entities/domain/entities/product.entity';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
 describe('ProductRepositoryPg (Integration)', () => {
-  let repository: ProductRepositoryPg;
+  let repository: ProductRepository;
   let typeOrmRepo: Repository<ProductOrmEntity>;
 
   beforeAll(async () => {
@@ -28,10 +28,10 @@ describe('ProductRepositoryPg (Integration)', () => {
         }),
         TypeOrmModule.forFeature([ProductOrmEntity]),
       ],
-      providers: [ProductRepositoryPg],
+      providers: [ProductRepository],
     }).compile();
 
-    repository = module.get<ProductRepositoryPg>(ProductRepositoryPg);
+    repository = module.get<ProductRepository>(ProductRepository);
     typeOrmRepo = module.get<Repository<ProductOrmEntity>>(
       getRepositoryToken(ProductOrmEntity),
     );

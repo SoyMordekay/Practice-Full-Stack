@@ -5,6 +5,8 @@ export class Product {
   price: number;
   stock: number;
   imageUrl: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 
   /**
    * Verifica si hay suficiente stock para la cantidad solicitada.

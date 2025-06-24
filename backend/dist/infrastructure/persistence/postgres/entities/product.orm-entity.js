@@ -18,6 +18,8 @@ let ProductOrmEntity = class ProductOrmEntity {
     price;
     stock;
     imageUrl;
+    createdAt;
+    updatedAt;
 };
 exports.ProductOrmEntity = ProductOrmEntity;
 __decorate([
@@ -44,6 +46,14 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], ProductOrmEntity.prototype, "imageUrl", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], ProductOrmEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], ProductOrmEntity.prototype, "updatedAt", void 0);
 exports.ProductOrmEntity = ProductOrmEntity = __decorate([
     (0, typeorm_1.Entity)({ name: 'products' })
 ], ProductOrmEntity);

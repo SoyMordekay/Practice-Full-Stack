@@ -1,13 +1,8 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { ProductList } from './features/products/ProductList';
-import { PaymentModal } from './features/payment/PaymentModal';
-import type { RootState } from './app/store';
 import './App.css';
 
 function App() {
-  const { isModalOpen } = useSelector((state: RootState) => state.payment);
-
   return (
     <div className="App">
       <header className="App-header">
@@ -16,7 +11,6 @@ function App() {
       <main>
         <ProductList />
       </main>
-      {isModalOpen && <PaymentModal />}
     </div>
   );
 }

@@ -4,6 +4,13 @@ Backend API for a credit card payment onboarding and product store, built with *
 
 ---
 
+## 📚 API Documentation
+
+- Interactive Swagger UI: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+- Import the Postman collection from `/docs` (if available).
+
+---
+
 ## 🚀 Tech Stack
 
 - [NestJS](https://nestjs.com/) (Node.js framework)

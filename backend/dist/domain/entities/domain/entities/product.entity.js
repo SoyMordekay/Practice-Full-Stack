@@ -8,6 +8,8 @@ class Product {
     price;
     stock;
     imageUrl;
+    createdAt;
+    updatedAt;
     hasStock(quantity) {
         return this.stock >= quantity;
     }

@@ -34,6 +34,9 @@ export class UpdateDeliveryUseCase {
   async execute(request: UpdateDeliveryRequest): Promise<UpdateDeliveryResult> {
     try {
       const delivery = await this.deliveryRepository.update(request.id, request.data);
+      if (!delivery) {
+        return UpdateDeliveryResult.failure(new Error('Delivery not found'));
+      }
       return UpdateDeliveryResult.success(delivery);
     } catch (error) {
       return UpdateDeliveryResult.failure(error as Error);

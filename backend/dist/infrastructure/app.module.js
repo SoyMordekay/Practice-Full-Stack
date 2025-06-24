@@ -14,6 +14,8 @@ const payment_module_1 = require("./payment/payment.module");
 const product_module_1 = require("./product/product.module");
 const customer_module_1 = require("./customer/customer.module");
 const delivery_module_1 = require("./delivery/delivery.module");
+const seed_controller_1 = require("./common/seeding/seed.controller");
+const seed_service_1 = require("./common/seeding/seed.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -38,8 +40,8 @@ exports.AppModule = AppModule = __decorate([
             customer_module_1.CustomerModule,
             delivery_module_1.DeliveryModule,
         ],
-        controllers: [],
-        providers: [],
+        controllers: [seed_controller_1.SeedController],
+        providers: [seed_service_1.SeedService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

@@ -34,6 +34,9 @@ export class UpdateCustomerUseCase {
   async execute(request: UpdateCustomerRequest): Promise<UpdateCustomerResult> {
     try {
       const customer = await this.customerRepository.update(request.id, request.data);
+      if (!customer) {
+        return UpdateCustomerResult.failure(new Error('Customer not found'));
+      }
       return UpdateCustomerResult.success(customer);
     } catch (error) {
       return UpdateCustomerResult.failure(error as Error);

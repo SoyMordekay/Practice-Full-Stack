@@ -256,7 +256,7 @@ describe('TransactionRepositoryPg (Integration)', () => {
           'APPROVED',
         ),
       ).rejects.toThrow(
-        'Transaction with ID "a3e1b2c4-1234-5678-9abc-def012345678" not found',
+        'Transaction with local id "a3e1b2c4-1234-5678-9abc-def012345678" not found for status update.',
       );
     });
 

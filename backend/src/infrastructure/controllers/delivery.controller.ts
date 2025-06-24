@@ -6,7 +6,9 @@ import { UpdateDeliveryUseCase } from '../../application/use-cases/delivery/upda
 import { DeleteDeliveryUseCase } from '../../application/use-cases/delivery/delete-delivery.usecase';
 import { CreateDeliveryRequest } from '../../application/use-cases/delivery/create-delivery.usecase';
 import { UpdateDeliveryRequest } from '../../application/use-cases/delivery/update-delivery.usecase';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Entregas')
 @Controller('deliveries')
 export class DeliveryController {
   constructor(
@@ -14,7 +16,7 @@ export class DeliveryController {
     private readonly getAllDeliveriesUseCase: GetAllDeliveriesUseCase,
     private readonly getDeliveryByIdUseCase: GetDeliveryByIdUseCase,
     private readonly updateDeliveryUseCase: UpdateDeliveryUseCase,
-    private readonly deleteDeliveryUseCase: DeleteDeliveryUseCase,
+    private readonly deleteDeliveryUseCase: DeleteDeliveryUseCase
   ) {}
 
   @Post()
@@ -27,6 +29,8 @@ export class DeliveryController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Obtener todas las entregas' })
+  @ApiResponse({ status: 200, description: 'Lista de entregas' })
   async findAll() {
     const result = await this.getAllDeliveriesUseCase.execute();
     if (!result.isSuccess) {
@@ -36,6 +40,9 @@ export class DeliveryController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Obtener entrega por ID' })
+  @ApiResponse({ status: 200, description: 'Entrega encontrada' })
+  @ApiResponse({ status: 404, description: 'Entrega no encontrada' })
   async findOne(@Param('id') id: string) {
     const result = await this.getDeliveryByIdUseCase.execute({ id });
     if (!result.isSuccess) {

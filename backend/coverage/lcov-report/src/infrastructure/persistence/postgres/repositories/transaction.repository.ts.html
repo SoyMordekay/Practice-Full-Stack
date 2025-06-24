@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.32% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>28/31</span>
+                <span class='fraction'>28/32</span>
             </div>
         
             
@@ -131,11 +131,25 @@
 <a name='L66'></a><a href='#L66'>66</a>
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,13 +170,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -187,23 +201,33 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ITransactionRepository } from '../../../../domain/repositories/ITransaction.repository';
-import { Transaction, TransactionStatus, CreateTransactionData } from '../../../../domain/entities/transaction.entity';
+import {
+  Transaction,
+  TransactionStatus,
+  CreateTransactionData,
+} from '../../../../domain/entities/transaction.entity';
 import { TransactionOrmEntity } from '../entities/transaction.orm-entity';
 &nbsp;
 @Injectable()
@@ -223,7 +247,8 @@ export class TransactionRepositoryPg implements ITransactionRepository {
 &nbsp;
   async create(transactionData: CreateTransactionData): Promise&lt;Transaction&gt; {
     const savedEntity = await this.typeOrmRepo.save(transactionData);
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (!savedEntity) <span class="cstat-no" title="statement not covered" >throw new Error('Failed to create transaction in database.');</span>
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!savedEntity)
+<span class="cstat-no" title="statement not covered" >      throw new Error('Failed to create transaction in database.');</span>
     return this.toDomain(savedEntity) as Transaction;
   }
 &nbsp;
@@ -232,13 +257,12 @@ export class TransactionRepositoryPg implements ITransactionRepository {
     return this.toDomain(ormEntity);
   }
 &nbsp;
- async updateStatus(
+  async updateStatus(
     id: string,
     status: TransactionStatus,
     wompiTransactionId?: string,
-    wompiResponse?: any,
+    wompiResponse?: Record&lt;string, unknown&gt;,
   ): Promise&lt;Transaction&gt; {
-    
     const updatePayload: Partial&lt;TransactionOrmEntity&gt; = { status };
     <span class="missing-if-branch" title="if path not taken" >I</span>if (wompiTransactionId) {
 <span class="cstat-no" title="statement not covered" >      updatePayload.wompiTransactionId = wompiTransactionId;</span>
@@ -246,35 +270,41 @@ export class TransactionRepositoryPg implements ITransactionRepository {
     <span class="missing-if-branch" title="if path not taken" >I</span>if (wompiResponse) {
       // Asumimos que wompiResponse es un objeto JSON que se puede guardar
       // TypeORM lo manejará si el tipo de columna es 'jsonb' o 'json'
-<span class="cstat-no" title="statement not covered" >      updatePayload.wompiResponse = wompiResponse; </span>
+<span class="cstat-no" title="statement not covered" >      updatePayload.wompiResponse = wompiResponse;</span>
     }
 &nbsp;
     const updateResult = await this.typeOrmRepo.update(id, updatePayload);
 &nbsp;
     if (updateResult.affected === 0) {
-      throw new Error(`Transaction with local id "${id}" not found for status update.`);
+      throw new Error(
+        `Transaction with local id "${id}" not found for status update.`,
+      );
     }
 &nbsp;
     const updatedOrmEntity = await this.typeOrmRepo.findOneBy({ id });
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!updatedOrmEntity) {
       // Esto sería muy raro si el update funcionó, pero es una buena guarda
-<span class="cstat-no" title="statement not covered" >      throw new Error(`Failed to retrieve transaction with local id "${id}" after status update.`);</span>
+<span class="cstat-no" title="statement not covered" >      throw new Error(</span>
+        `Failed to retrieve transaction with local id "${id}" after status update.`,
+      );
     }
     return this.toDomain(updatedOrmEntity) as Transaction;
   }
 &nbsp;
-    async findByReference(reference: string): Promise&lt;Transaction | null&gt; { // &lt;-- NUEVA IMPLEMENTACIÓN
+  async findByReference(reference: string): Promise&lt;Transaction | null&gt; {
+    // &lt;-- NUEVA IMPLEMENTACIÓN
     const ormEntity = await this.typeOrmRepo.findOneBy({ reference });
     return this.toDomain(ormEntity);
   }
-}</pre></td></tr></table></pre>
+}
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-24T03:40:55.181Z
+                at 2025-06-24T08:08:20.998Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>
