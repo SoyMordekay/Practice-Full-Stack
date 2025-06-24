@@ -12,6 +12,8 @@ const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
 const payment_module_1 = require("./payment/payment.module");
 const product_module_1 = require("./product/product.module");
+const customer_module_1 = require("./customer/customer.module");
+const delivery_module_1 = require("./delivery/delivery.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -33,6 +35,8 @@ exports.AppModule = AppModule = __decorate([
             }),
             payment_module_1.PaymentModule,
             product_module_1.ProductModule,
+            customer_module_1.CustomerModule,
+            delivery_module_1.DeliveryModule,
         ],
         controllers: [],
         providers: [],

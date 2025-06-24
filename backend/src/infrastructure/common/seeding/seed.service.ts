@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { IProductRepository } from '../../../domain/repositories/IProduct.repository';
 import { Product } from '../../../domain/entities/domain/entities/product.entity';
 
 @Injectable()
 export class SeedService {
-  constructor(private readonly productRepository: IProductRepository) {}
+  constructor(
+    @Inject(IProductRepository) private readonly productRepository: IProductRepository
+  ) {}
 
   async seedProducts(): Promise<void> {
     const products: Partial<Product>[] = [
