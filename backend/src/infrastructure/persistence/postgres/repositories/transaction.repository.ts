@@ -31,11 +31,39 @@ export class TransactionRepositoryPg implements ITransactionRepository {
     return this.toDomain(ormEntity);
   }
 
-  async updateStatus(id: string, status: TransactionStatus): Promise<Transaction> {
-    const updateResult = await this.typeOrmRepo.update(id, { status });
-    if (updateResult.affected === 0) throw new Error(`Transaction with id "${id}" not found.`);
+ async updateStatus(
+    id: string,
+    status: TransactionStatus,
+    wompiTransactionId?: string,
+    wompiResponse?: any,
+  ): Promise<Transaction> {
+    
+    const updatePayload: Partial<TransactionOrmEntity> = { status };
+    if (wompiTransactionId) {
+      updatePayload.wompiTransactionId = wompiTransactionId;
+    }
+    if (wompiResponse) {
+      // Asumimos que wompiResponse es un objeto JSON que se puede guardar
+      // TypeORM lo manejará si el tipo de columna es 'jsonb' o 'json'
+      updatePayload.wompiResponse = wompiResponse; 
+    }
+
+    const updateResult = await this.typeOrmRepo.update(id, updatePayload);
+
+    if (updateResult.affected === 0) {
+      throw new Error(`Transaction with local id "${id}" not found for status update.`);
+    }
+
     const updatedOrmEntity = await this.typeOrmRepo.findOneBy({ id });
-    if (!updatedOrmEntity) throw new Error(`Failed to retrieve transaction with id "${id}" after update.`);
+    if (!updatedOrmEntity) {
+      // Esto sería muy raro si el update funcionó, pero es una buena guarda
+      throw new Error(`Failed to retrieve transaction with local id "${id}" after status update.`);
+    }
     return this.toDomain(updatedOrmEntity) as Transaction;
+  }
+
+    async findByReference(reference: string): Promise<Transaction | null> { // <-- NUEVA IMPLEMENTACIÓN
+    const ormEntity = await this.typeOrmRepo.findOneBy({ reference });
+    return this.toDomain(ormEntity);
   }
 }

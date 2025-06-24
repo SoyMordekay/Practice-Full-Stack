@@ -10,4 +10,6 @@ export class Transaction {
   productId: string;
   customerEmail: string;
   createdAt: Date;
+  wompiTransactionId?: string;
+  wompiResponse?: any;
 }

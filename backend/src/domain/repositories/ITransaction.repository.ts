@@ -24,4 +24,7 @@ export interface ITransactionRepository {
    * @returns La transacción actualizada.
    */
   updateStatus(id: string, status: TransactionStatus): Promise<Transaction>;
+
+  findByReference(reference: string): Promise<Transaction | null>;
+  
 }

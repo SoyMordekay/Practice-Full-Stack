@@ -22,4 +22,10 @@ export class TransactionOrmEntity {
 
   @CreateDateColumn()
   createdAt: Date;
+
+   @Column({ type: 'varchar', nullable: true }) // O el tipo que Wompi use para sus IDs
+  wompiTransactionId?: string;
+
+  @Column({ type: 'jsonb', nullable: true }) // 'jsonb' es bueno para PostgreSQL
+  wompiResponse?: any; // Guarda el objeto de respuesta completo de Wompi
 }
